@@ -35,4 +35,25 @@ public static class Extensions {
     public static Color32 ToColor(this uint colorUInt) {
         return new Color32((byte)(colorUInt >> 16), (byte)(colorUInt >> 8), (byte)(colorUInt >> 0), (byte)(colorUInt >> 24));
     }
+
+    public static Texture2D ResizeNN(this Texture2D source, int newWidth, int newHeight) {
+        Color[] sourceColors = source.GetPixels();
+        Color[] colors = new Color[newWidth * newHeight];
+        float xRatio = source.width / (float)newWidth;
+        float yRatio = source.height / (float)newHeight;
+        float px, py;
+        for (int i = 0; i < newHeight; i++) {
+            for (int j = 0; j < newWidth; j++) {
+                px = Mathf.Floor(j * xRatio);
+                py = Mathf.Floor(i * yRatio);
+                colors[i * newWidth + j] = sourceColors[(int)((py * source.width) + px)];
+            }
+        }
+
+        Texture2D result = new Texture2D(newWidth, newHeight);
+        result.SetPixels(colors);
+        result.Apply();
+
+        return result;
+    }
 }

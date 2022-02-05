@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,8 +12,8 @@ public class Raycaster : MonoBehaviour {
     private const bool forceGrayscale = false;
     private const bool lensCorrection = true;
     private float fovIncrement;
-    public float maxDistanceFactor = 100f;
-    public float maxSpriteDistanceFactor = 1f;
+    private const float maxDistanceFactor = 12f;
+    private const float maxSpriteDistanceFactor = 16f;
 
     private Color[] barColorBuffer;
     private GameObject player;
@@ -71,85 +72,32 @@ public class Raycaster : MonoBehaviour {
         float startAngle = fov * 0.5f;
         float endAngle = -startAngle;
         int x = 0;
+        List<Collider2D> spriteColliders = new List<Collider2D>();
         for (float angle = startAngle; angle > endAngle; angle -= fovIncrement) {
             if (x >= surfaceWidth) {
                 continue;
             }
 
-            Vector2 rayVector = ((Vector2)player.transform.up).Rotate(angle);
-
+            Vector2 rayVector = ((Vector2)player.transform.up).Rotate(angle).normalized;
             RaycastHit2D hit = Physics2D.Raycast(player.transform.position, rayVector, maxDistanceFactor, LayerMask.GetMask(new string[] { "World" }));
             if (hit.collider != null) {
-                float baseDistance = hit.distance;
-                float distance = baseDistance;
-                if (lensCorrection) {
-                    distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
-                }
+                DrawWallColumn(x, angle, hit);
+                Debug.DrawLine(
+                   (Vector2)player.transform.position,
+                   hit.point,
+                   Color.blue,
+                   artificialFramerateValue
+               );
 
-                float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
-                int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
+                RaycastHit2D[] spritesHit = Physics2D.RaycastAll(
+                    player.transform.position, rayVector, maxSpriteDistanceFactor, LayerMask.GetMask(new string[] { "SpritesNoCollision" })
+                );
+                //Debug.DrawLine(player.transform.position, (Vector2)player.transform.position + rayVector * maxSpriteDistanceFactor, Color.green);
 
-
-                int y = Mathf.RoundToInt(surfaceHeight * 0.5f - barSize * 0.5f);
-                int skip = Mathf.RoundToInt(
-                    closenessFactor * closenessFactor * 10
-                ) + 1;
-                for (int i = 0; i < barSize; i++) {
-                    if (forceGrayscale) {
-                        //float distanceFromMiddle = 1f - (Mathf.Abs(((barSize * 0.5f) - i)) / barSize * 0.5f);
-                        float distanceFromMiddle = 1f;
-                        barColorBuffer[i] = new Color(closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle);
-                    } else {
-                        if (closenessFactor > 0.8f) {
-                            barColorBuffer[i] = nokiaFront;
-                        } else {
-                            barColorBuffer[i] = i % skip == 0 ? nokiaBack : nokiaFront;
-                        }
+                foreach (RaycastHit2D spriteHit in spritesHit) {
+                    if (spriteHit.collider != null && spriteHit.distance < hit.distance && !spriteColliders.Contains(spriteHit.collider)) {
+                        spriteColliders.Add(spriteHit.collider);
                     }
-                }
-
-                surface.SetPixels(x, y, 1, barSize, barColorBuffer);
-
-                RaycastHit2D spriteHit = Physics2D.Raycast(player.transform.position, rayVector, maxDistanceFactor, LayerMask.GetMask(new string[] { "SpritesNoCollision" }));
-                if (spriteHit.collider != null && spriteHit.distance < hit.distance) {
-                    SpriteRenderer sprite = spriteHit.collider.gameObject.GetComponent<SpriteRenderer>();
-                    Vector2 deltaPosition = spriteHit.point - (Vector2)spriteHit.transform.position;
-                    Vector2 spritePosDiff = new Vector2(deltaPosition.x, deltaPosition.y) +
-                        new Vector2(0.5f, 0.5f);
-
-                    // TODO: draw scaled sprite instead of all this crap
-                    float spriteBaseDistance = spriteHit.distance;
-                    float spriteDistance = spriteBaseDistance;
-                    if (lensCorrection) {
-                        spriteDistance = Mathf.Cos(angle * Mathf.Deg2Rad) * spriteBaseDistance;
-                    }
-
-                    float spriteClosenessFactor =
-                        1f - Mathf.Max(Mathf.Min((spriteDistance / maxSpriteDistanceFactor), maxSpriteDistanceFactor), 0f);
-                    float adjustedHeight = sprite.sprite.texture.height * spriteClosenessFactor;
-                    int spriteY = Mathf.RoundToInt(surfaceHeight * 0.5f + adjustedHeight * 0.5f);
-                    int spriteTextureX = (int)Mathf.Round(spritePosDiff.x * sprite.sprite.texture.width);
-                    for (int spriteTextureY = 0; spriteTextureY < adjustedHeight; spriteTextureY++) {
-                        Color spriteTextureColor = sprite.sprite.texture.GetPixel(spriteTextureX, (int)(spriteTextureY * (adjustedHeight / sprite.sprite.texture.height)));
-
-                        if (spriteTextureColor.a > 0f) {
-                            surface.SetPixel(x, spriteY - spriteTextureY, spriteTextureColor.r < 0.5f ? nokiaFront : nokiaBack);
-                        }
-                    }
-
-                    Debug.DrawLine(
-                        (Vector2)player.transform.position,
-                        spriteHit.point,
-                        Color.green,
-                        artificialFramerateValue
-                    );
-                } else {
-                    Debug.DrawLine(
-                        (Vector2)player.transform.position,
-                        hit.point,
-                        Color.blue,
-                        artificialFramerateValue
-                    );
                 }
             } else {
                 Debug.DrawLine(
@@ -161,6 +109,48 @@ public class Raycaster : MonoBehaviour {
             }
 
             x++;
+        }
+
+        /*GameObject[] spriteObjects = GameObject.FindGameObjectsWithTag("SpriteNoCollision");
+        foreach (GameObject spriteObject in spriteObjects) {
+            spriteColliders.Add(spriteObject.GetComponent<Collider2D>());
+        }*/
+
+        foreach (Collider2D spriteCollider in spriteColliders) {
+            Vector2 vectorToSprite = spriteCollider.transform.position - player.transform.position;
+            float angleToSprite = Vector2.SignedAngle(vectorToSprite, player.transform.up);
+            if (angleToSprite < fov * -0.5f || angleToSprite > fov * 0.5f) {
+                continue;
+            }
+
+            Debug.Log(angleToSprite / (fov * 0.5f));
+
+            SpriteRenderer spriteRenderer = spriteCollider.gameObject.GetComponent<SpriteRenderer>();
+
+            float baseDistance = Vector2.Distance(spriteCollider.transform.position, player.transform.position);
+            float distance = baseDistance;
+            if (lensCorrection) {
+                distance = Mathf.Cos(angleToSprite * Mathf.Deg2Rad) * baseDistance;
+            }
+
+            float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / 8f), 8f), 0f);
+
+            int targetWidth = Mathf.RoundToInt(spriteRenderer.sprite.texture.width * closenessFactor);
+            int targetHeight = Mathf.RoundToInt(spriteRenderer.sprite.texture.height * closenessFactor);
+            if (targetWidth < 1 || targetHeight < 1) {
+                continue;
+            }
+
+            Texture2D spriteTexture = spriteRenderer.sprite.texture.ResizeNN(targetWidth, targetHeight);
+
+            float screenXPosition = (angleToSprite / (fov * 0.5f)) * (surface.width * 0.5f);
+            surface.SetPixels(
+                Mathf.RoundToInt(surface.width * 0.5f + screenXPosition),
+                Mathf.RoundToInt(surfaceHeight * 0.5f - spriteTexture.height * 0.5f),
+                spriteTexture.width,
+                spriteTexture.height,
+                spriteTexture.GetPixels()
+            );
         }
 
         Debug.DrawLine(player.transform.position, player.transform.position + player.transform.up * 50f, Color.yellow);
@@ -229,5 +219,37 @@ public class Raycaster : MonoBehaviour {
 
     private bool IsInRange(int x, int y, int width, int height) {
         return x >= 0 && y >= 0 && x < width && y < height;
+    }
+
+    private void DrawWallColumn(int x, float angle, RaycastHit2D hit) {
+        float baseDistance = hit.distance;
+        float distance = baseDistance;
+        if (lensCorrection) {
+            distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
+        }
+
+        float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
+        int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
+
+
+        int y = Mathf.RoundToInt(surfaceHeight * 0.5f - barSize * 0.5f);
+        int skip = Mathf.RoundToInt(
+            closenessFactor * closenessFactor * 10
+        ) + 1;
+        for (int i = 0; i < barSize; i++) {
+            if (forceGrayscale) {
+                //float distanceFromMiddle = 1f - (Mathf.Abs(((barSize * 0.5f) - i)) / barSize * 0.5f);
+                float distanceFromMiddle = 1f;
+                barColorBuffer[i] = new Color(closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle);
+            } else {
+                if (closenessFactor > 0.9f) {
+                    barColorBuffer[i] = nokiaFront;
+                } else {
+                    barColorBuffer[i] = i % skip == 0 ? nokiaBack : nokiaFront;
+                }
+            }
+        }
+
+        surface.SetPixels(x, y, 1, barSize, barColorBuffer);
     }
 }
