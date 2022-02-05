@@ -12,6 +12,7 @@ public class Raycaster : MonoBehaviour {
     private const bool lensCorrection = true;
     private float fovIncrement;
     public float maxDistanceFactor = 100f;
+    public float maxSpriteDistanceFactor = 1f;
 
     private Color[] barColorBuffer;
     private GameObject player;
@@ -109,12 +110,47 @@ public class Raycaster : MonoBehaviour {
 
                 surface.SetPixels(x, y, 1, barSize, barColorBuffer);
 
-                Debug.DrawLine(
-                    (Vector2)player.transform.position,
-                    hit.point,
-                    Color.blue,
-                    artificialFramerateValue
-                );
+                RaycastHit2D spriteHit = Physics2D.Raycast(player.transform.position, rayVector, maxDistanceFactor, LayerMask.GetMask(new string[] { "SpritesNoCollision" }));
+                if (spriteHit.collider != null && spriteHit.distance < hit.distance) {
+                    SpriteRenderer sprite = spriteHit.collider.gameObject.GetComponent<SpriteRenderer>();
+                    Vector2 deltaPosition = spriteHit.point - (Vector2)spriteHit.transform.position;
+                    Vector2 spritePosDiff = new Vector2(deltaPosition.x, deltaPosition.y) +
+                        new Vector2(0.5f, 0.5f);
+
+                    // TODO: draw scaled sprite instead of all this crap
+                    float spriteBaseDistance = spriteHit.distance;
+                    float spriteDistance = spriteBaseDistance;
+                    if (lensCorrection) {
+                        spriteDistance = Mathf.Cos(angle * Mathf.Deg2Rad) * spriteBaseDistance;
+                    }
+
+                    float spriteClosenessFactor =
+                        1f - Mathf.Max(Mathf.Min((spriteDistance / maxSpriteDistanceFactor), maxSpriteDistanceFactor), 0f);
+                    float adjustedHeight = sprite.sprite.texture.height * spriteClosenessFactor;
+                    int spriteY = Mathf.RoundToInt(surfaceHeight * 0.5f + adjustedHeight * 0.5f);
+                    int spriteTextureX = (int)Mathf.Round(spritePosDiff.x * sprite.sprite.texture.width);
+                    for (int spriteTextureY = 0; spriteTextureY < adjustedHeight; spriteTextureY++) {
+                        Color spriteTextureColor = sprite.sprite.texture.GetPixel(spriteTextureX, (int)(spriteTextureY * (adjustedHeight / sprite.sprite.texture.height)));
+
+                        if (spriteTextureColor.a > 0f) {
+                            surface.SetPixel(x, spriteY - spriteTextureY, spriteTextureColor.r < 0.5f ? nokiaFront : nokiaBack);
+                        }
+                    }
+
+                    Debug.DrawLine(
+                        (Vector2)player.transform.position,
+                        spriteHit.point,
+                        Color.green,
+                        artificialFramerateValue
+                    );
+                } else {
+                    Debug.DrawLine(
+                        (Vector2)player.transform.position,
+                        hit.point,
+                        Color.blue,
+                        artificialFramerateValue
+                    );
+                }
             } else {
                 Debug.DrawLine(
                     (Vector2)player.transform.position,
