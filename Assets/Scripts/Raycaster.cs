@@ -62,7 +62,9 @@ public class Raycaster : MonoBehaviour {
         if (artificialFramerate < 0f) {
             artificialFramerate = artificialFramerateValue;
         } else {
-            return;
+            if (!Application.isEditor) {
+                return;
+            }
         }
 
         surface.Clear(clearColor);
