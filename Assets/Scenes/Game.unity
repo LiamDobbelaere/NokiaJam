@@ -1329,7 +1329,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 997f8f0fb574d344a8baed8f73f37011, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDistanceFactor: 12
 --- !u!1 &1780572029
 GameObject:
   m_ObjectHideFlags: 0
@@ -1579,7 +1578,7 @@ GameObject:
   - component: {fileID: 2041032543}
   m_Layer: 7
   m_Name: Torch
-  m_TagString: Untagged
+  m_TagString: SpriteNoCollision
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

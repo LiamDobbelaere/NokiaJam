@@ -22,7 +22,7 @@ public class Raycaster : MonoBehaviour {
     private Color nokiaBack = new Color(199 / 256f, 240 / 256f, 216 / 256f);
     private Color nokiaFront = new Color(67 / 256f, 82 / 256f, 61 / 256f);
 
-    private const float artificialFramerateValue = 0.05f;
+    private const float artificialFramerateValue = 0.064f;
     private float artificialFramerate = artificialFramerateValue;
 
     // Start is called before the first frame update
@@ -62,7 +62,7 @@ public class Raycaster : MonoBehaviour {
         if (artificialFramerate < 0f) {
             artificialFramerate = artificialFramerateValue;
         } else {
-            //return;
+            return;
         }
 
         surface.Clear(clearColor);
@@ -123,8 +123,6 @@ public class Raycaster : MonoBehaviour {
                 continue;
             }
 
-            Debug.Log(angleToSprite / (fov * 0.5f));
-
             SpriteRenderer spriteRenderer = spriteCollider.gameObject.GetComponent<SpriteRenderer>();
 
             float baseDistance = Vector2.Distance(spriteCollider.transform.position, player.transform.position);
@@ -133,7 +131,7 @@ public class Raycaster : MonoBehaviour {
                 distance = Mathf.Cos(angleToSprite * Mathf.Deg2Rad) * baseDistance;
             }
 
-            float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / 8f), 8f), 0f);
+            float closenessFactor = 1f / distance; //2f - Mathf.Max(Mathf.Min((distance / 3f), 3f), 0f);
 
             int targetWidth = Mathf.RoundToInt(spriteRenderer.sprite.texture.width * closenessFactor);
             int targetHeight = Mathf.RoundToInt(spriteRenderer.sprite.texture.height * closenessFactor);
@@ -144,13 +142,31 @@ public class Raycaster : MonoBehaviour {
             Texture2D spriteTexture = spriteRenderer.sprite.texture.ResizeNN(targetWidth, targetHeight);
 
             float screenXPosition = (angleToSprite / (fov * 0.5f)) * (surface.width * 0.5f);
-            surface.SetPixels(
-                Mathf.RoundToInt(surface.width * 0.5f + screenXPosition),
-                Mathf.RoundToInt(surfaceHeight * 0.5f - spriteTexture.height * 0.5f),
-                spriteTexture.width,
-                spriteTexture.height,
-                spriteTexture.GetPixels()
-            );
+
+            int drawX = Mathf.RoundToInt(surface.width * 0.5f + screenXPosition);
+            int drawY = Mathf.RoundToInt(surfaceHeight * 0.5f - spriteTexture.height * 0.5f);
+
+            int spritePixelX = -1;
+            int spritePixelY = -1;
+            for (int surfY = drawY; surfY < drawY + spriteTexture.height; surfY++) {
+                spritePixelY++;
+
+                for (int surfX = drawX; surfX < drawX + spriteTexture.width; surfX++) {
+                    spritePixelX++;
+
+                    Color spritePixel = spriteTexture.GetPixel(spritePixelX, spriteTexture.height - 1 - spritePixelY);
+
+                    if (spritePixel.a < 0.5f) {
+                        continue;
+                    }
+
+                    if (surfX < 0 || surfX >= surface.width || surfY < 0 || surfY >= surface.height) {
+                        continue;
+                    }
+
+                    surface.SetPixel(surfX, surfY, spritePixel.r > 0.5f ? nokiaBack : nokiaFront);
+                }
+            }
         }
 
         Debug.DrawLine(player.transform.position, player.transform.position + player.transform.up * 50f, Color.yellow);
@@ -228,7 +244,8 @@ public class Raycaster : MonoBehaviour {
             distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
         }
 
-        float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
+        //float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
+        float closenessFactor = Mathf.Min(1f / distance, 1f);
         int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
 
 
