@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour {
 
     private const float moveSpeed = 24f;
     private const float rotateSpeed = 150f;
+    private const bool oneButtonAtATime = true;
 
     // Start is called before the first frame update
     void Start() {
@@ -14,8 +15,19 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void Update() {
-        horizontal = Input.GetAxisRaw("Horizontal");
-        vertical = Input.GetAxisRaw("Vertical");
+        if (oneButtonAtATime) {
+            horizontal = Input.GetAxisRaw("Horizontal");
+
+            if (Mathf.Abs(horizontal) < 0.1f) {
+                horizontal = 0f;
+                vertical = Input.GetAxisRaw("Vertical");
+            } else {
+                vertical = 0f;
+            }
+
+        } else {
+
+        }
 
         transform.Rotate(0f, 0f, -horizontal * rotateSpeed * Time.deltaTime);
     }
