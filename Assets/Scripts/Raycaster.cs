@@ -42,8 +42,10 @@ public class Raycaster : MonoBehaviour {
     private Color nokiaBack = new Color(199 / 256f, 240 / 256f, 216 / 256f);
     private Color nokiaFront = new Color(67 / 256f, 82 / 256f, 61 / 256f);
 
-    private const float artificialFramerateValue = 0.064f;
-    private float artificialFramerate = artificialFramerateValue;
+    private float artificialFramerateValue = 1 / 15f;
+    private float artificialFramerate;
+    private int framerateMode = 0;
+    private bool useArtificialFramerate = true;
 
     private ViewMode currentViewMode = ViewMode.WORLD;
 
@@ -54,8 +56,8 @@ public class Raycaster : MonoBehaviour {
     void Start() {
         options = new Option[] {
             new Option {
-                label = "COLORS",
-                sublabel = () => forceGrayscale ? "GRAYSCALE" : "NOKIA COLORS",
+                label = "colors",
+                sublabel = () => forceGrayscale ? "grayscale" : "nokia colors",
                 execute = () => {
                     forceGrayscale = !forceGrayscale;
                     if (forceGrayscale) {
@@ -70,14 +72,40 @@ public class Raycaster : MonoBehaviour {
                 }
             },
             new Option {
-                label = "FOV",
-                sublabel = () => fov.ToString(),
+                label = "fov",
+                sublabel = () => fov == 80f ? "default" : fov.ToString(),
                 execute = () => {
                     fov += 10;
                     if (fov > 120) {
                         fov = 30;
                     }
                     fovIncrement = fov / surfaceWidth;
+                }
+            },
+            new Option {
+                label = "frames/s",
+                sublabel = () => useArtificialFramerate ? Mathf.RoundToInt(1 / artificialFramerateValue).ToString() : "uncapped",
+                execute = () => {
+                    framerateMode++;
+                    if (framerateMode > 2) {
+                        framerateMode = 0;
+                    }
+
+                    switch (framerateMode) {
+                        case 0:
+                            useArtificialFramerate = true;
+                            artificialFramerate = 0f;
+                            artificialFramerateValue = 1/15f;
+                            break;
+                        case 1:
+                            useArtificialFramerate = true;
+                            artificialFramerate = 0f;
+                            artificialFramerateValue = 1/60f;
+                            break;
+                        case 2:
+                            useArtificialFramerate = false;
+                            break;
+                    }
                 }
             }
         };
@@ -95,6 +123,7 @@ public class Raycaster : MonoBehaviour {
         barColorBuffer.Fill(clearColor);
 
         fovIncrement = fov / surfaceWidth;
+        artificialFramerate = artificialFramerateValue;
     }
 
     private void SetupSurface() {
@@ -111,11 +140,13 @@ public class Raycaster : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        artificialFramerate -= Time.deltaTime;
-        if (artificialFramerate < 0f) {
-            artificialFramerate = artificialFramerateValue;
-        } else {
-            if (!Application.isEditor) {
+        ProcessInput();
+
+        if (useArtificialFramerate) {
+            artificialFramerate -= Time.deltaTime;
+            if (artificialFramerate < 0f) {
+                artificialFramerate = artificialFramerateValue;
+            } else {
                 return;
             }
         }
@@ -128,20 +159,7 @@ public class Raycaster : MonoBehaviour {
                 break;
             case ViewMode.OPTIONS:
                 RenderOptions();
-                if (Input.GetButtonDown("PrimaryAction")) {
-                    options[currentOptionIndex].execute();
-                }
-                if (Input.GetButtonDown("Horizontal")) {
-                    currentOptionIndex++;
-                    if (currentOptionIndex >= options.Length) {
-                        currentOptionIndex = 0;
-                    }
-                }
                 break;
-        }
-
-        if (Input.GetButtonDown("Options")) {
-            currentViewMode = currentViewMode == ViewMode.OPTIONS ? ViewMode.WORLD : ViewMode.OPTIONS;
         }
 
         surface.Apply();
@@ -303,6 +321,7 @@ public class Raycaster : MonoBehaviour {
             }
 
             SpriteRenderer spriteRenderer = spriteCollider.gameObject.GetComponent<SpriteRenderer>();
+            RaycastAttributes spriteAttributes = spriteCollider.gameObject.GetComponent<RaycastAttributes>();
 
             float baseDistance = Vector2.Distance(spriteCollider.transform.position, player.transform.position);
             float distance = baseDistance;
@@ -323,7 +342,9 @@ public class Raycaster : MonoBehaviour {
             float screenXPosition = (angleToSprite / (fov * 0.5f)) * (surface.width * 0.5f);
 
             int drawX = Mathf.RoundToInt(surface.width * 0.5f + screenXPosition - spriteTexture.width * 0.5f);
-            int drawY = Mathf.RoundToInt(surfaceHeight * 0.5f - spriteTexture.height * 0.5f);
+            int drawY = Mathf.RoundToInt(
+                surface.height * 0.5f - spriteTexture.height * 0.5f
+                - (spriteAttributes.zOffset * closenessFactor));
 
             int spritePixelX = -1;
             int spritePixelY = -1;
@@ -393,7 +414,25 @@ public class Raycaster : MonoBehaviour {
         Option currentOption = options[currentOptionIndex];
 
         DrawText("Options", 2, 2);
-        DrawText("< " + currentOption.label + " >", 2, 2 + fontCharacterHeight * 2);
+        DrawText(currentOption.label + " ->", 2, 2 + fontCharacterHeight * 2);
         DrawText(currentOption.sublabel(), 2, 2 + fontCharacterHeight * 3);
+    }
+
+    private void ProcessInput() {
+        if (currentViewMode == ViewMode.OPTIONS) {
+            if (Input.GetButtonDown("PrimaryAction")) {
+                options[currentOptionIndex].execute();
+            }
+            if (Input.GetButtonDown("Horizontal")) {
+                currentOptionIndex++;
+                if (currentOptionIndex >= options.Length) {
+                    currentOptionIndex = 0;
+                }
+            }
+        }
+
+        if (Input.GetButtonDown("Options")) {
+            currentViewMode = currentViewMode == ViewMode.OPTIONS ? ViewMode.WORLD : ViewMode.OPTIONS;
+        }
     }
 }

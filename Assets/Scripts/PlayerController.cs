@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour {
 
         if (Vector2.Distance(lastFootstepPosition, transform.position) > 1f) {
             HaltMusic();
+            audioSource.time = 0f;
             audioSource.volume = 1f;
             audioSource.clip = footstepSounds[Random.Range(0, footstepSounds.Length)];
             audioSource.Play();

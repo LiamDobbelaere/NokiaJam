@@ -216,6 +216,7 @@ GameObject:
   - component: {fileID: 664107351}
   - component: {fileID: 664107350}
   - component: {fileID: 664107349}
+  - component: {fileID: 664107352}
   m_Layer: 7
   m_Name: Torch (1)
   m_TagString: SpriteNoCollision
@@ -314,6 +315,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &664107352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 664107348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 208e25b9cc19fe842b4671da477e0488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  zOffset: 0
 --- !u!1 &708928042
 GameObject:
   m_ObjectHideFlags: 0
@@ -1268,13 +1282,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1296561448}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: 0.4002894, w: 0.9163888}
   m_LocalPosition: {x: -26.557, y: -22.4013, z: 0}
   m_LocalScale: {x: 0.9419955, y: 2.014123, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 7
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 47.193}
 --- !u!233 &1296561451
 HingeJoint2D:
   m_ObjectHideFlags: 0
@@ -1291,7 +1305,7 @@ HingeJoint2D:
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
   m_ConnectedAnchor: {x: -26.557, y: -22.4013}
-  m_UseMotor: 1
+  m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 100
     m_MaximumMotorForce: 10000
@@ -1783,6 +1797,7 @@ GameObject:
   - component: {fileID: 2041032545}
   - component: {fileID: 2041032544}
   - component: {fileID: 2041032543}
+  - component: {fileID: 2041032546}
   m_Layer: 7
   m_Name: Torch
   m_TagString: SpriteNoCollision
@@ -1881,3 +1896,16 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2041032546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2041032542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 208e25b9cc19fe842b4671da477e0488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  zOffset: 0.5
