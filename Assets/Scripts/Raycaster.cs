@@ -57,7 +57,7 @@ public class Raycaster : MonoBehaviour {
         options = new Option[] {
             new Option {
                 label = "colors",
-                sublabel = () => forceGrayscale ? "grayscale" : "nokia colors",
+                sublabel = () => forceGrayscale ? "grayscl. test" : "nokia colors",
                 execute = () => {
                     forceGrayscale = !forceGrayscale;
                     if (forceGrayscale) {
@@ -241,7 +241,6 @@ public class Raycaster : MonoBehaviour {
         float closenessFactor = Mathf.Min(1f / distance, 1f);
         int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
 
-
         int y = Mathf.RoundToInt(surfaceHeight * 0.5f - barSize * 0.5f);
         int skip = Mathf.RoundToInt(
             closenessFactor * closenessFactor * 10
@@ -298,13 +297,6 @@ public class Raycaster : MonoBehaviour {
                         spriteColliders.Add(spriteHit.collider);
                     }
                 }
-            } else {
-                Debug.DrawLine(
-                    (Vector2)player.transform.position,
-                    (Vector2)player.transform.position + (((Vector2)player.transform.up).Rotate(angle)) * 50f,
-                    Color.cyan,
-                    artificialFramerateValue
-                );
             }
 
             x++;
@@ -334,11 +326,14 @@ public class Raycaster : MonoBehaviour {
                 continue;
             }
 
+            float fovAlignmentFactor = angleToSprite / (fov * 0.5f);
+
             Texture2D spriteTexture = spriteRenderer.sprite.texture.ResizeNN(
-                Mathf.RoundToInt(targetWidth * spriteAttributes.scale), Mathf.RoundToInt(targetHeight * spriteAttributes.scale)
+                Mathf.Min(100, Mathf.RoundToInt(targetWidth * spriteAttributes.scale)),
+                Mathf.Min(100, Mathf.RoundToInt(targetHeight * spriteAttributes.scale))
             );
 
-            float screenXPosition = (angleToSprite / (fov * 0.5f)) * (surface.width * 0.5f);
+            float screenXPosition = fovAlignmentFactor * (surface.width * 0.5f);
 
             int drawX = Mathf.RoundToInt(surface.width * 0.5f + screenXPosition - spriteTexture.width * 0.5f);
             int drawY = Mathf.RoundToInt(
@@ -375,7 +370,7 @@ public class Raycaster : MonoBehaviour {
 
     private void BuildFontMap() {
         this.fontMap = new Dictionary<char, Color[]>();
-        string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!-_~#\"'&()[]{}^|`/\\@°+=*%€$£¢<>©®";
+        string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!-_~#\"'&()[]{}^|`/\\@ï¿½+=*%ï¿½$ï¿½ï¿½<>ï¿½ï¿½";
 
         int i = 0;
         foreach (char character in charSet) {
