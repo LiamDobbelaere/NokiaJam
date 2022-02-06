@@ -22,7 +22,7 @@ public class Raycaster : MonoBehaviour {
     private Image image;
 
     private Texture2D surface;
-    private const float fov = 80f;
+    private float fov = 80f;
     private const int surfaceWidth = 84;
     private const int surfaceHeight = 48;
     private const int fontCharacterWidth = 5;
@@ -54,8 +54,8 @@ public class Raycaster : MonoBehaviour {
     void Start() {
         options = new Option[] {
             new Option {
-                label = "2-COLOR",
-                sublabel = () => forceGrayscale ? "OFF" : "ON",
+                label = "COLORS",
+                sublabel = () => forceGrayscale ? "GRAYSCALE" : "NOKIA COLORS",
                 execute = () => {
                     forceGrayscale = !forceGrayscale;
                     if (forceGrayscale) {
@@ -67,6 +67,17 @@ public class Raycaster : MonoBehaviour {
                         nokiaFront = nokiaFrontColor;
                         clearColor = nokiaBack;
                     }
+                }
+            },
+            new Option {
+                label = "FOV",
+                sublabel = () => fov.ToString(),
+                execute = () => {
+                    fov += 10;
+                    if (fov > 120) {
+                        fov = 30;
+                    }
+                    fovIncrement = fov / surfaceWidth;
                 }
             }
         };
@@ -119,6 +130,12 @@ public class Raycaster : MonoBehaviour {
                 RenderOptions();
                 if (Input.GetButtonDown("PrimaryAction")) {
                     options[currentOptionIndex].execute();
+                }
+                if (Input.GetButtonDown("Horizontal")) {
+                    currentOptionIndex++;
+                    if (currentOptionIndex >= options.Length) {
+                        currentOptionIndex = 0;
+                    }
                 }
                 break;
         }
@@ -305,7 +322,7 @@ public class Raycaster : MonoBehaviour {
 
             float screenXPosition = (angleToSprite / (fov * 0.5f)) * (surface.width * 0.5f);
 
-            int drawX = Mathf.RoundToInt(surface.width * 0.5f + screenXPosition);
+            int drawX = Mathf.RoundToInt(surface.width * 0.5f + screenXPosition - spriteTexture.width * 0.5f);
             int drawY = Mathf.RoundToInt(surfaceHeight * 0.5f - spriteTexture.height * 0.5f);
 
             int spritePixelX = -1;
