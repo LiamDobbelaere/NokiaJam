@@ -321,7 +321,7 @@ public class Raycaster : MonoBehaviour {
             }
 
             SpriteRenderer spriteRenderer = spriteCollider.gameObject.GetComponent<SpriteRenderer>();
-            RaycastAttributes spriteAttributes = spriteCollider.gameObject.GetComponent<RaycastAttributes>();
+            SpriteRaycastAttributes spriteAttributes = spriteCollider.gameObject.GetComponent<SpriteRaycastAttributes>();
 
             float baseDistance = Vector2.Distance(spriteCollider.transform.position, player.transform.position);
             float distance = baseDistance;
@@ -337,7 +337,9 @@ public class Raycaster : MonoBehaviour {
                 continue;
             }
 
-            Texture2D spriteTexture = spriteRenderer.sprite.texture.ResizeNN(targetWidth, targetHeight);
+            Texture2D spriteTexture = spriteRenderer.sprite.texture.ResizeNN(
+                Mathf.RoundToInt(targetWidth * spriteAttributes.scale), Mathf.RoundToInt(targetHeight * spriteAttributes.scale)
+            );
 
             float screenXPosition = (angleToSprite / (fov * 0.5f)) * (surface.width * 0.5f);
 
