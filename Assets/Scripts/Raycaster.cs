@@ -45,7 +45,7 @@ public class Raycaster : MonoBehaviour {
     private float artificialFramerateValue = 1 / 15f;
     private float artificialFramerate;
     private int framerateMode = 0;
-    private bool useArtificialFramerate = true;
+    private bool useArtificialFramerate = !Application.isEditor;
 
     private ViewMode currentViewMode = ViewMode.WORLD;
 
@@ -287,7 +287,9 @@ public class Raycaster : MonoBehaviour {
                );
 
                 RaycastHit2D[] spritesHit = Physics2D.RaycastAll(
-                    player.transform.position, rayVector, maxSpriteDistanceFactor, LayerMask.GetMask(new string[] { "SpritesNoCollision" })
+                    player.transform.position, rayVector, maxSpriteDistanceFactor,
+                        LayerMask.GetMask(new string[] { "SpritesNoCollision", "Sprites" }
+                    )
                 );
                 //Debug.DrawLine(player.transform.position, (Vector2)player.transform.position + rayVector * maxSpriteDistanceFactor, Color.green);
 
@@ -307,11 +309,6 @@ public class Raycaster : MonoBehaviour {
 
             x++;
         }
-
-        /*GameObject[] spriteObjects = GameObject.FindGameObjectsWithTag("SpriteNoCollision");
-        foreach (GameObject spriteObject in spriteObjects) {
-            spriteColliders.Add(spriteObject.GetComponent<Collider2D>());
-        }*/
 
         foreach (Collider2D spriteCollider in spriteColliders) {
             Vector2 vectorToSprite = spriteCollider.transform.position - player.transform.position;
