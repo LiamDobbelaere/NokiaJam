@@ -1,15 +1,33 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum ViewMode {
+    WORLD,
+    MAP,
+    OPTIONS
+};
+
+public class Option {
+    public string label;
+    public Func<string> sublabel;
+    public Action execute;
+}
+
 public class Raycaster : MonoBehaviour {
+    public Texture2D font;
+    private Dictionary<char, Color[]> fontMap;
+
     private Image image;
 
     private Texture2D surface;
     private const float fov = 80f;
     private const int surfaceWidth = 84;
     private const int surfaceHeight = 48;
-    private const bool forceGrayscale = false;
+    private const int fontCharacterWidth = 5;
+    private const int fontCharacterHeight = 6;
+    private bool forceGrayscale = false;
     private const bool lensCorrection = true;
     private float fovIncrement;
     private const float maxDistanceFactor = 12f;
@@ -19,24 +37,48 @@ public class Raycaster : MonoBehaviour {
     private GameObject player;
 
     private Color clearColor;
+    private Color nokiaBackColor = new Color(199 / 256f, 240 / 256f, 216 / 256f);
+    private Color nokiaFrontColor = new Color(67 / 256f, 82 / 256f, 61 / 256f);
     private Color nokiaBack = new Color(199 / 256f, 240 / 256f, 216 / 256f);
     private Color nokiaFront = new Color(67 / 256f, 82 / 256f, 61 / 256f);
 
     private const float artificialFramerateValue = 0.064f;
     private float artificialFramerate = artificialFramerateValue;
 
+    private ViewMode currentViewMode = ViewMode.WORLD;
+
+    private Option[] options;
+    private int currentOptionIndex = 0;
+
     // Start is called before the first frame update
     void Start() {
+        options = new Option[] {
+            new Option {
+                label = "2-COLOR",
+                sublabel = () => forceGrayscale ? "OFF" : "ON",
+                execute = () => {
+                    forceGrayscale = !forceGrayscale;
+                    if (forceGrayscale) {
+                        nokiaBack = Color.black;
+                        nokiaFront = Color.white;
+                        clearColor = nokiaBack;
+                    } else {
+                        nokiaBack = nokiaBackColor;
+                        nokiaFront = nokiaFrontColor;
+                        clearColor = nokiaBack;
+                    }
+                }
+            }
+        };
+        BuildFontMap();
+
         SetupSurface();
         SetupSprite();
 
         player = GameObject.FindGameObjectWithTag("Player");
 
-        if (forceGrayscale) {
-            clearColor = Color.black;
-        } else {
-            clearColor = nokiaBack;
-        }
+        clearColor = nokiaBack;
+
 
         barColorBuffer = new Color[surfaceWidth * surfaceHeight];
         barColorBuffer.Fill(clearColor);
@@ -69,6 +111,124 @@ public class Raycaster : MonoBehaviour {
 
         surface.Clear(clearColor);
 
+        switch (currentViewMode) {
+            case ViewMode.WORLD:
+                RenderWorld();
+                break;
+            case ViewMode.OPTIONS:
+                RenderOptions();
+                if (Input.GetButtonDown("PrimaryAction")) {
+                    options[currentOptionIndex].execute();
+                }
+                break;
+        }
+
+        if (Input.GetButtonDown("Options")) {
+            currentViewMode = currentViewMode == ViewMode.OPTIONS ? ViewMode.WORLD : ViewMode.OPTIONS;
+        }
+
+        surface.Apply();
+    }
+
+    private void DrawCeiling() {
+        Color[] floorColorBuffer = new Color[surface.width * surface.height / 2];
+        floorColorBuffer.Fill(nokiaFront);
+
+        if (forceGrayscale) {
+            surface.SetPixels(0, surfaceHeight / 2, surface.width, surface.height / 2, floorColorBuffer);
+        } else {
+            surface.SetPixels(0, 0, surface.width, surface.height / 2, floorColorBuffer);
+        }
+    }
+
+    private void ApplyFloydSteinbergDither() {
+        Color32[] pixels = surface.GetPixels32();
+        for (int y = 0; y < surface.height; y++) {
+            for (int x = 0; x < surface.width; x++) {
+                Color32 oldPixel = pixels.GetCoordinate(x, y, surface.width);
+                Color32 newPixel = oldPixel.r < 128 ? nokiaBack : nokiaFront;
+                pixels.SetCoordinate(x, y, surface.width, newPixel);
+
+                uint oldPixelUInt = oldPixel.ToUInt();
+                uint newPixelUInt = newPixel.ToUInt();
+
+                float quantizationError = oldPixelUInt - newPixelUInt;
+
+                if (IsInRange(x + 1, y, surface.width, surface.height)) {
+                    float newValue = pixels.GetCoordinate(x + 1, y, surface.width).ToUInt() + quantizationError * (7.0f / 16.0f);
+                    pixels.SetCoordinate(
+                        x + 1, y, surface.width,
+                        ((uint)newValue).ToColor()
+                    );
+                }
+
+                if (IsInRange(x - 1, y + 1, surface.width, surface.height)) {
+                    float newValue = pixels.GetCoordinate(x - 1, y + 1, surface.width).ToUInt() + quantizationError * (3.0f / 16.0f);
+                    pixels.SetCoordinate(
+                        x - 1, y + 1, surface.width,
+                        ((uint)newValue).ToColor()
+                    );
+                }
+
+                if (IsInRange(x, y + 1, surface.width, surface.height)) {
+                    float newValue = pixels.GetCoordinate(x, y + 1, surface.width).ToUInt() + quantizationError * (5.0f / 16.0f);
+                    pixels.SetCoordinate(
+                        x, y + 1, surface.width,
+                        ((uint)newValue).ToColor()
+                    );
+                }
+
+                if (IsInRange(x + 1, y + 1, surface.width, surface.height)) {
+                    float newValue = pixels.GetCoordinate(x + 1, y + 1, surface.width).ToUInt() + quantizationError * (1.0f / 16.0f);
+                    pixels.SetCoordinate(
+                        x + 1, y + 1, surface.width,
+                        ((uint)newValue).ToColor()
+                    );
+                }
+            }
+        }
+
+        surface.SetPixels32(pixels);
+    }
+
+    private bool IsInRange(int x, int y, int width, int height) {
+        return x >= 0 && y >= 0 && x < width && y < height;
+    }
+
+    private void DrawWallColumn(int x, float angle, RaycastHit2D hit) {
+        float baseDistance = hit.distance;
+        float distance = baseDistance;
+        if (lensCorrection) {
+            distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
+        }
+
+        //float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
+        float closenessFactor = Mathf.Min(1f / distance, 1f);
+        int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
+
+
+        int y = Mathf.RoundToInt(surfaceHeight * 0.5f - barSize * 0.5f);
+        int skip = Mathf.RoundToInt(
+            closenessFactor * closenessFactor * 10
+        ) + 1;
+        for (int i = 0; i < barSize; i++) {
+            if (forceGrayscale) {
+                //float distanceFromMiddle = 1f - (Mathf.Abs(((barSize * 0.5f) - i)) / barSize * 0.5f);
+                float distanceFromMiddle = 1f;
+                barColorBuffer[i] = new Color(closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle);
+            } else {
+                if (closenessFactor > 0.9f) {
+                    barColorBuffer[i] = nokiaFront;
+                } else {
+                    barColorBuffer[i] = i % skip == 0 ? nokiaBack : nokiaFront;
+                }
+            }
+        }
+
+        surface.SetPixels(x, y, 1, barSize, barColorBuffer);
+    }
+
+    private void RenderWorld() {
         DrawCeiling();
 
         float startAngle = fov * 0.5f;
@@ -174,101 +334,49 @@ public class Raycaster : MonoBehaviour {
         Debug.DrawLine(player.transform.position, player.transform.position + player.transform.up * 50f, Color.yellow);
 
         //ApplyFloydSteinbergDither();
-
-        surface.Apply();
     }
 
-    private void DrawCeiling() {
-        Color[] floorColorBuffer = new Color[surface.width * surface.height / 2];
-        floorColorBuffer.Fill(nokiaFront);
+    private void BuildFontMap() {
+        this.fontMap = new Dictionary<char, Color[]>();
+        string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!-_~#\"'&()[]{}^|`/\\@°+=*%€$£¢<>©®";
 
-        surface.SetPixels(0, 0, surface.width, surface.height / 2, floorColorBuffer);
+        int i = 0;
+        foreach (char character in charSet) {
+            fontMap[character] = font.GetPixels(fontCharacterWidth * i, 0, fontCharacterWidth, fontCharacterHeight);
+            i++;
+        }
     }
 
-    private void ApplyFloydSteinbergDither() {
-        Color32[] pixels = surface.GetPixels32();
-        for (int y = 0; y < surface.height; y++) {
-            for (int x = 0; x < surface.width; x++) {
-                Color32 oldPixel = pixels.GetCoordinate(x, y, surface.width);
-                Color32 newPixel = oldPixel.r < 128 ? nokiaBack : nokiaFront;
-                pixels.SetCoordinate(x, y, surface.width, newPixel);
+    private void DrawCharacter(char character, int x, int y) {
+        if (!fontMap.ContainsKey(character)) {
+            return;
+        }
 
-                uint oldPixelUInt = oldPixel.ToUInt();
-                uint newPixelUInt = newPixel.ToUInt();
-
-                float quantizationError = oldPixelUInt - newPixelUInt;
-
-                if (IsInRange(x + 1, y, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x + 1, y, surface.width).ToUInt() + quantizationError * (7.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x + 1, y, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
+        for (int cy = 0; cy < fontCharacterHeight; cy++) {
+            for (int cx = 0; cx < fontCharacterWidth; cx++) {
+                Color col = fontMap[character][cy * fontCharacterWidth + cx];
+                if (col.a < 0.5f) {
+                    continue;
                 }
 
-                if (IsInRange(x - 1, y + 1, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x - 1, y + 1, surface.width).ToUInt() + quantizationError * (3.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x - 1, y + 1, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
-
-                if (IsInRange(x, y + 1, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x, y + 1, surface.width).ToUInt() + quantizationError * (5.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x, y + 1, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
-
-                if (IsInRange(x + 1, y + 1, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x + 1, y + 1, surface.width).ToUInt() + quantizationError * (1.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x + 1, y + 1, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
+                surface.SetPixel(x + cx, y + fontCharacterHeight - cy, nokiaFront);
             }
         }
-
-        surface.SetPixels32(pixels);
     }
 
-    private bool IsInRange(int x, int y, int width, int height) {
-        return x >= 0 && y >= 0 && x < width && y < height;
+    private void DrawText(string text, int x, int y) {
+        for (int i = 0; i < text.Length; i++) {
+            char character = text[i];
+
+            DrawCharacter(character, x + i * (fontCharacterWidth + 1), y);
+        }
     }
 
-    private void DrawWallColumn(int x, float angle, RaycastHit2D hit) {
-        float baseDistance = hit.distance;
-        float distance = baseDistance;
-        if (lensCorrection) {
-            distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
-        }
+    private void RenderOptions() {
+        Option currentOption = options[currentOptionIndex];
 
-        //float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
-        float closenessFactor = Mathf.Min(1f / distance, 1f);
-        int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
-
-
-        int y = Mathf.RoundToInt(surfaceHeight * 0.5f - barSize * 0.5f);
-        int skip = Mathf.RoundToInt(
-            closenessFactor * closenessFactor * 10
-        ) + 1;
-        for (int i = 0; i < barSize; i++) {
-            if (forceGrayscale) {
-                //float distanceFromMiddle = 1f - (Mathf.Abs(((barSize * 0.5f) - i)) / barSize * 0.5f);
-                float distanceFromMiddle = 1f;
-                barColorBuffer[i] = new Color(closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle);
-            } else {
-                if (closenessFactor > 0.9f) {
-                    barColorBuffer[i] = nokiaFront;
-                } else {
-                    barColorBuffer[i] = i % skip == 0 ? nokiaBack : nokiaFront;
-                }
-            }
-        }
-
-        surface.SetPixels(x, y, 1, barSize, barColorBuffer);
+        DrawText("Options", 2, 2);
+        DrawText("< " + currentOption.label + " >", 2, 2 + fontCharacterHeight * 2);
+        DrawText(currentOption.sublabel(), 2, 2 + fontCharacterHeight * 3);
     }
 }

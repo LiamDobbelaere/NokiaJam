@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
     public AudioClip[] footstepSounds;
+    public AudioClip music;
 
     private Rigidbody2D rb;
     private AudioSource audioSource;
@@ -12,7 +13,9 @@ public class PlayerController : MonoBehaviour {
     private const float moveSpeed = 24f;
     private const float rotateSpeed = 150f;
     private const bool oneButtonAtATime = true;
+
     private Vector2 lastFootstepPosition;
+    private float musicTime = 0f;
 
     // Start is called before the first frame update
     void Start() {
@@ -39,8 +42,13 @@ public class PlayerController : MonoBehaviour {
 
         transform.Rotate(0f, 0f, -horizontal * rotateSpeed * Time.deltaTime);
 
+        if (!audioSource.isPlaying) {
+            ContinueMusic();
+        }
+
         if (Vector2.Distance(lastFootstepPosition, transform.position) > 1f) {
-            audioSource.Stop();
+            HaltMusic();
+            audioSource.volume = 1f;
             audioSource.clip = footstepSounds[Random.Range(0, footstepSounds.Length)];
             audioSource.Play();
 
@@ -53,5 +61,21 @@ public class PlayerController : MonoBehaviour {
         // TODO: add strafing
         rb.AddRelativeForce(new Vector2(0f, vertical) * moveSpeed);
         //rb.AddTorque(-horizontal * rotateSpeed);
+    }
+
+    private void HaltMusic() {
+        musicTime = audioSource.time;
+        audioSource.loop = false;
+        audioSource.playOnAwake = false;
+        audioSource.Stop();
+    }
+
+    private void ContinueMusic() {
+        audioSource.loop = true;
+        audioSource.clip = music;
+        audioSource.volume = 0f;
+
+        audioSource.Play();
+        audioSource.time = musicTime;
     }
 }
