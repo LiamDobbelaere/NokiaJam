@@ -302,6 +302,7 @@ public class Raycaster : MonoBehaviour {
             x++;
         }
 
+        spriteColliders.Reverse();
         foreach (Collider2D spriteCollider in spriteColliders) {
             Vector2 vectorToSprite = spriteCollider.transform.position - player.transform.position;
             float angleToSprite = Vector2.SignedAngle(vectorToSprite, player.transform.up);
