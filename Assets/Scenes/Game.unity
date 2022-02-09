@@ -3787,11 +3787,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3eec4a69135e544a6455d128083e94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  footstepSounds:
-  - {fileID: 8300000, guid: 3b646f19c462d304b86d582cc0036639, type: 3}
-  - {fileID: 8300000, guid: 60555ace75e5eb24b8db21c690547783, type: 3}
-  - {fileID: 8300000, guid: 353d885df85ec684c8fcb86b3dee2be8, type: 3}
-  music: {fileID: 8300000, guid: b70620c1bce6e2243bc1646487a2831d, type: 3}
+  footstepSound: {fileID: 8300000, guid: 031467913547f774b978ecc958e8e968, type: 3}
+  shootSound: {fileID: 8300000, guid: 58bba8c3ce6230046bbed3b4238d5404, type: 3}
   rock: {fileID: 3269899484154866622, guid: af02bdca534f39c4fa59eebe9b9d878d, type: 3}
 --- !u!82 &1780572035
 AudioSource:
@@ -3803,11 +3800,11 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: b70620c1bce6e2243bc1646487a2831d, type: 3}
-  m_PlayOnAwake: 1
-  m_Volume: 0
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
   m_Pitch: 1
-  Loop: 1
+  Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0

@@ -1,8 +1,8 @@
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
-    public AudioClip[] footstepSounds;
-    public AudioClip music;
+    public AudioClip footstepSound;
+    public AudioClip shootSound;
     public GameObject rock;
 
     private float fireCooldownTimer;
@@ -47,6 +47,8 @@ public class PlayerController : MonoBehaviour {
 
                         GameObject bullet = Instantiate(rock, transform.position + transform.up * 0.5f, transform.rotation);
                         bullet.GetComponent<Rigidbody2D>().AddForce(transform.up * 500f);
+
+                        PlayAudio(shootSound);
                     }
                 }
             } else {
@@ -59,17 +61,8 @@ public class PlayerController : MonoBehaviour {
 
         transform.Rotate(0f, 0f, -horizontal * rotateSpeed * Time.deltaTime);
 
-        if (!audioSource.isPlaying) {
-            ContinueMusic();
-        }
-
         if (Vector2.Distance(lastFootstepPosition, transform.position) > 1f) {
-            HaltMusic();
-            audioSource.time = 0f;
-            audioSource.volume = 1f;
-            audioSource.clip = footstepSounds[Random.Range(0, footstepSounds.Length)];
-            audioSource.Play();
-
+            PlayAudio(footstepSound);
             lastFootstepPosition = transform.position;
         }
     }
@@ -81,23 +74,13 @@ public class PlayerController : MonoBehaviour {
         //rb.AddTorque(-horizontal * rotateSpeed);
     }
 
-    private void HaltMusic() {
-        musicTime = audioSource.time;
-        audioSource.loop = false;
-        audioSource.playOnAwake = false;
-        audioSource.Stop();
-    }
-
-    private void ContinueMusic() {
-        audioSource.loop = true;
-        audioSource.clip = music;
-        audioSource.volume = 0f;
-
-        audioSource.Play();
-        audioSource.time = musicTime;
-    }
-
     public bool IsFireCooldownActive() {
         return this.fireCooldownTimer > 0f;
+    }
+
+    public void PlayAudio(AudioClip clip) {
+        audioSource.Stop();
+        audioSource.clip = clip;
+        audioSource.Play();
     }
 }
