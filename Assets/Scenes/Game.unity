@@ -264,6 +264,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7993870802650699303, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
+      propertyPath: noZTest
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
 --- !u!1001 &570967101
@@ -324,6 +328,10 @@ PrefabInstance:
     - target: {fileID: 7993870802650699301, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7993870802650699303, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
+      propertyPath: noZTest
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
@@ -451,6 +459,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zOffset: 0
   scale: 1
+  noZTest: 0
 --- !u!1 &708928042
 GameObject:
   m_ObjectHideFlags: 0
@@ -2589,6 +2598,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zOffset: -20
   scale: 1
+  noZTest: 0
 --- !u!212 &1217978322
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -2970,6 +2980,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zOffset: 0
   scale: 1
+  noZTest: 0
 --- !u!212 &1441732205
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3083,6 +3094,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isTranslucent: 0
   renderStyle: v
+  texture: {fileID: 0}
 --- !u!19719996 &1489202432
 TilemapCollider2D:
   m_ObjectHideFlags: 0
@@ -3511,6 +3523,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   font: {fileID: 2800000, guid: df6cb2efa8491a14482172e725bb42d0, type: 3}
+  slingshotIdle: {fileID: 2800000, guid: b73aa3ff7e93f3b42af10d9c6fc2906b, type: 3}
+  slingshotFire: {fileID: 2800000, guid: 4f81167ece2de934e94ae830512249ed, type: 3}
 --- !u!1001 &1665707342
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3630,6 +3644,10 @@ PrefabInstance:
     - target: {fileID: 7993870802650699301, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7993870802650699303, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
+      propertyPath: noZTest
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
@@ -3774,6 +3792,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 60555ace75e5eb24b8db21c690547783, type: 3}
   - {fileID: 8300000, guid: 353d885df85ec684c8fcb86b3dee2be8, type: 3}
   music: {fileID: 8300000, guid: b70620c1bce6e2243bc1646487a2831d, type: 3}
+  rock: {fileID: 3269899484154866622, guid: af02bdca534f39c4fa59eebe9b9d878d, type: 3}
 --- !u!82 &1780572035
 AudioSource:
   m_ObjectHideFlags: 0
@@ -3990,6 +4009,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7993870802650699303, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
+      propertyPath: noZTest
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
 --- !u!1001 &1944963362
@@ -4113,6 +4136,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zOffset: -15
   scale: 1.5
+  noZTest: 0
 --- !u!212 &1992774531
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -4323,6 +4347,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zOffset: 0.5
   scale: 1
+  noZTest: 0
 --- !u!1001 &2096912170
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4443,6 +4468,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7993870802650699303, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
+      propertyPath: noZTest
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
 --- !u!1001 &1699175854453770468
@@ -4455,6 +4484,10 @@ PrefabInstance:
     - target: {fileID: 1699175854148891456, guid: 523bbece0bc7e1841987027e83d4da28, type: 3}
       propertyPath: m_Name
       value: Door
+      objectReference: {fileID: 0}
+    - target: {fileID: 1699175854148891458, guid: 523bbece0bc7e1841987027e83d4da28, type: 3}
+      propertyPath: noZTest
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1699175854148891468, guid: 523bbece0bc7e1841987027e83d4da28, type: 3}
       propertyPath: m_RootOrder
@@ -4621,6 +4654,10 @@ PrefabInstance:
     - target: {fileID: 7993870802650699301, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7993870802650699303, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}
+      propertyPath: noZTest
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ece23c4b75fe4a1468de02a19e31d054, type: 3}

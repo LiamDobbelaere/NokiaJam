@@ -3,7 +3,9 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour {
     public AudioClip[] footstepSounds;
     public AudioClip music;
+    public GameObject rock;
 
+    private float fireCooldownTimer;
     private Rigidbody2D rb;
     private AudioSource audioSource;
 
@@ -26,12 +28,27 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void Update() {
+        if (fireCooldownTimer > 0f) {
+            fireCooldownTimer -= Time.deltaTime;
+        }
+
         if (oneButtonAtATime) {
             horizontal = Input.GetAxisRaw("Horizontal");
 
             if (Mathf.Abs(horizontal) < 0.1f) {
                 horizontal = 0f;
                 vertical = Input.GetAxisRaw("Vertical");
+
+                if (Mathf.Abs(vertical) < 0.1f) {
+                    bool fire = Input.GetButtonDown("PrimaryAction");
+
+                    if (fire && !IsFireCooldownActive()) {
+                        fireCooldownTimer = 1f;
+
+                        GameObject bullet = Instantiate(rock, transform.position + transform.up * 0.5f, transform.rotation);
+                        bullet.GetComponent<Rigidbody2D>().AddForce(transform.up * 500f);
+                    }
+                }
             } else {
                 vertical = 0f;
             }
@@ -78,5 +95,9 @@ public class PlayerController : MonoBehaviour {
 
         audioSource.Play();
         audioSource.time = musicTime;
+    }
+
+    public bool IsFireCooldownActive() {
+        return this.fireCooldownTimer > 0f;
     }
 }

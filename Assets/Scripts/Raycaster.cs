@@ -17,6 +17,9 @@ public class Option {
 
 public class Raycaster : MonoBehaviour {
     public Texture2D font;
+    public Texture2D slingshotIdle;
+    public Texture2D slingshotFire;
+
     private Dictionary<char, Color[]> fontMap;
 
     private Image image;
@@ -34,7 +37,9 @@ public class Raycaster : MonoBehaviour {
     private const float maxSpriteDistanceFactor = 16f;
 
     private Color[] barColorBuffer;
+    private float[] barZBuffer;
     private GameObject player;
+    private PlayerController playerController;
 
     private Color clearColor;
     private Color nokiaBackColor = new Color(199 / 256f, 240 / 256f, 216 / 256f);
@@ -83,7 +88,7 @@ public class Raycaster : MonoBehaviour {
                 }
             },
             new Option {
-                label = "hires",
+                label = "hires test",
                 sublabel = () => surfaceWidth == 84 ? "no" : "yes",
                 execute = () => {
                     if (surfaceWidth == 84) {
@@ -130,9 +135,11 @@ public class Raycaster : MonoBehaviour {
         SetupSprite();
 
         player = GameObject.FindGameObjectWithTag("Player");
+        playerController = player.GetComponent<PlayerController>();
 
         clearColor = nokiaBack;
 
+        barZBuffer = new float[surfaceWidth];
 
         barColorBuffer = new Color[surfaceWidth * surfaceHeight];
         barColorBuffer.Fill(clearColor);
@@ -191,56 +198,6 @@ public class Raycaster : MonoBehaviour {
         }
     }
 
-    private void ApplyFloydSteinbergDither() {
-        Color32[] pixels = surface.GetPixels32();
-        for (int y = 0; y < surface.height; y++) {
-            for (int x = 0; x < surface.width; x++) {
-                Color32 oldPixel = pixels.GetCoordinate(x, y, surface.width);
-                Color32 newPixel = oldPixel.r < 128 ? nokiaBack : nokiaFront;
-                pixels.SetCoordinate(x, y, surface.width, newPixel);
-
-                uint oldPixelUInt = oldPixel.ToUInt();
-                uint newPixelUInt = newPixel.ToUInt();
-
-                float quantizationError = oldPixelUInt - newPixelUInt;
-
-                if (IsInRange(x + 1, y, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x + 1, y, surface.width).ToUInt() + quantizationError * (7.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x + 1, y, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
-
-                if (IsInRange(x - 1, y + 1, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x - 1, y + 1, surface.width).ToUInt() + quantizationError * (3.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x - 1, y + 1, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
-
-                if (IsInRange(x, y + 1, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x, y + 1, surface.width).ToUInt() + quantizationError * (5.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x, y + 1, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
-
-                if (IsInRange(x + 1, y + 1, surface.width, surface.height)) {
-                    float newValue = pixels.GetCoordinate(x + 1, y + 1, surface.width).ToUInt() + quantizationError * (1.0f / 16.0f);
-                    pixels.SetCoordinate(
-                        x + 1, y + 1, surface.width,
-                        ((uint)newValue).ToColor()
-                    );
-                }
-            }
-        }
-
-        surface.SetPixels32(pixels);
-    }
-
     private bool IsInRange(int x, int y, int width, int height) {
         return x >= 0 && y >= 0 && x < width && y < height;
     }
@@ -251,6 +208,8 @@ public class Raycaster : MonoBehaviour {
         if (lensCorrection) {
             distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
         }
+
+        barZBuffer[x] = distance;
 
         WorldRaycastAttributes worldRaycastAttributes = hit.collider.gameObject.GetComponent<WorldRaycastAttributes>();
 
@@ -268,18 +227,25 @@ public class Raycaster : MonoBehaviour {
                 float distanceFromMiddle = 1f;
                 barColorBuffer[i] = new Color(closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle, closenessFactor * distanceFromMiddle);
             } else {
-                if (closenessFactor > 0.9f) {
+                if (closenessFactor > 0.9f && !(worldRaycastAttributes != null && worldRaycastAttributes.renderStyle == "tex")) {
                     barColorBuffer[i] = nokiaFront;
                 } else {
                     bool shouldDraw = i % skip == 0;
 
-                    if (worldRaycastAttributes && worldRaycastAttributes.renderStyle != "h") {
+                    if (worldRaycastAttributes != null && worldRaycastAttributes.renderStyle != "h") {
                         switch (worldRaycastAttributes.renderStyle) {
                             case "v":
                                 shouldDraw = x % skip == 0;
                                 break;
                             case "hv":
                                 shouldDraw = i % skip == 0 || x % skip == 0;
+                                break;
+                            case "tex":
+                                Texture2D tex = worldRaycastAttributes.texture.texture;
+                                Color texPixel = tex.GetPixel(Mathf.RoundToInt(Mathf.Abs(hit.point.magnitude) * 100f % tex.width),
+                                    Mathf.RoundToInt((i / (float)barSize) * tex.height * (surfaceWidth / (float)surfaceHeight) % tex.height));
+
+                                shouldDraw = texPixel.r < 0.5f;
                                 break;
                         }
 
@@ -316,25 +282,19 @@ public class Raycaster : MonoBehaviour {
                    Color.blue,
                    artificialFramerateValue
                );
+            } else {
+                barZBuffer[x] = float.MaxValue;
+            }
 
-                RaycastHit2D[] spritesHit = Physics2D.RaycastAll(
-                    player.transform.position, rayVector, maxSpriteDistanceFactor,
-                        LayerMask.GetMask(new string[] { "SpritesNoCollision", "Sprites" }
-                    )
-                );
-                //Debug.DrawLine(player.transform.position, (Vector2)player.transform.position + rayVector * maxSpriteDistanceFactor, Color.green);
+            RaycastHit2D[] spritesHit = Physics2D.RaycastAll(
+                player.transform.position, rayVector, maxSpriteDistanceFactor,
+                    LayerMask.GetMask(new string[] { "SpritesNoCollision", "Sprites" }
+                )
+            );
 
-                foreach (RaycastHit2D spriteHit in spritesHit) {
-                    if (spriteHit.collider != null && spriteHit.distance < hit.distance && !spriteColliders.Contains(spriteHit.collider)) {
-                        //Vector2 vectorToSprite = ((Vector2)player.transform.position - (Vector2)spriteHit.transform.position).normalized;
-                        //RaycastHit2D lineOfSight = Physics2D.Linecast(player.transform.position, spriteHit.transform.position, LayerMask.GetMask(new string[] { "SpritesNoCollision", "Sprites", "World" }));
-
-                        //if (lineOfSight.collider != null && lineOfSight.collider.gameObject.layer == LayerMask.NameToLayer("World")) {
-                        //    continue;
-                        //}
-
-                        spriteColliders.Add(spriteHit.collider);
-                    }
+            foreach (RaycastHit2D spriteHit in spritesHit) {
+                if (spriteHit.collider != null && !spriteColliders.Contains(spriteHit.collider)) {
+                    spriteColliders.Add(spriteHit.collider);
                 }
             }
 
@@ -388,13 +348,16 @@ public class Raycaster : MonoBehaviour {
                 for (int surfX = drawX; surfX < drawX + spriteTexture.width; surfX++) {
                     spritePixelX++;
 
-                    Color spritePixel = spriteTexture.GetPixel(spritePixelX, spriteTexture.height - 1 - spritePixelY);
-
-                    if (spritePixel.a < 0.5f) {
+                    if (surfX < 0 || surfX >= surface.width || surfY < 0 || surfY >= surface.height) {
                         continue;
                     }
 
-                    if (surfX < 0 || surfX >= surface.width || surfY < 0 || surfY >= surface.height) {
+                    if (distance > barZBuffer[surfX] && !spriteAttributes.noZTest) {
+                        continue;
+                    }
+
+                    Color spritePixel = spriteTexture.GetPixel(spritePixelX, spriteTexture.height - 1 - spritePixelY);
+                    if (spritePixel.a < 0.5f) {
                         continue;
                     }
 
@@ -403,9 +366,13 @@ public class Raycaster : MonoBehaviour {
             }
         }
 
-        Debug.DrawLine(player.transform.position, player.transform.position + player.transform.up * 50f, Color.yellow);
+        if (playerController.IsFireCooldownActive()) {
+            DrawOverlay(slingshotFire);
+        } else {
+            DrawOverlay(slingshotIdle);
+        }
 
-        //ApplyFloydSteinbergDither();
+        Debug.DrawLine(player.transform.position, player.transform.position + player.transform.up * 50f, Color.yellow);
     }
 
     private void BuildFontMap() {
@@ -467,6 +434,19 @@ public class Raycaster : MonoBehaviour {
 
         if (Input.GetButtonDown("Options")) {
             currentViewMode = currentViewMode == ViewMode.OPTIONS ? ViewMode.WORLD : ViewMode.OPTIONS;
+        }
+    }
+
+    private void DrawOverlay(Texture2D overlay) {
+        for (int cy = 0; cy < overlay.height; cy++) {
+            for (int cx = 0; cx < overlay.width; cx++) {
+                Color col = overlay.GetPixel(cx, cy);
+                if (col.a < 0.5f) {
+                    continue;
+                }
+
+                surface.SetPixel(cx, surface.height - 1 - cy, col.r < 0.5f ? nokiaFront : nokiaBack);
+            }
         }
     }
 }
