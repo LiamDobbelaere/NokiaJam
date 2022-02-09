@@ -23,8 +23,8 @@ public class Raycaster : MonoBehaviour {
 
     private Texture2D surface;
     private float fov = 80f;
-    private const int surfaceWidth = 84;
-    private const int surfaceHeight = 48;
+    private int surfaceWidth = 84;
+    private int surfaceHeight = 48;
     private const int fontCharacterWidth = 5;
     private const int fontCharacterHeight = 6;
     private bool forceGrayscale = false;
@@ -80,6 +80,21 @@ public class Raycaster : MonoBehaviour {
                         fov = 30;
                     }
                     fovIncrement = fov / surfaceWidth;
+                }
+            },
+            new Option {
+                label = "hires",
+                sublabel = () => surfaceWidth == 84 ? "no" : "yes",
+                execute = () => {
+                    if (surfaceWidth == 84) {
+                        surfaceWidth = 640;
+                        surfaceHeight = 480;
+                    } else {
+                        surfaceWidth = 84;
+                        surfaceHeight = 48;
+                    }
+
+                    Start();
                 }
             },
             new Option {
@@ -237,6 +252,8 @@ public class Raycaster : MonoBehaviour {
             distance = Mathf.Cos(angle * Mathf.Deg2Rad) * baseDistance;
         }
 
+        WorldRaycastAttributes worldRaycastAttributes = hit.collider.gameObject.GetComponent<WorldRaycastAttributes>();
+
         //float closenessFactor = 1f - Mathf.Max(Mathf.Min((distance / maxDistanceFactor), maxDistanceFactor), 0f);
         float closenessFactor = Mathf.Min(1f / distance, 1f);
         int barSize = Mathf.RoundToInt(closenessFactor * surfaceHeight);
@@ -254,7 +271,22 @@ public class Raycaster : MonoBehaviour {
                 if (closenessFactor > 0.9f) {
                     barColorBuffer[i] = nokiaFront;
                 } else {
-                    barColorBuffer[i] = i % skip == 0 ? nokiaBack : nokiaFront;
+                    bool shouldDraw = i % skip == 0;
+
+                    if (worldRaycastAttributes && worldRaycastAttributes.renderStyle != "h") {
+                        switch (worldRaycastAttributes.renderStyle) {
+                            case "v":
+                                shouldDraw = x % skip == 0;
+                                break;
+                            case "hv":
+                                shouldDraw = i % skip == 0 || x % skip == 0;
+                                break;
+                        }
+
+                        barColorBuffer[i] = shouldDraw ? nokiaBack : nokiaFront;
+                    } else {
+                        barColorBuffer[i] = shouldDraw ? nokiaBack : nokiaFront;
+                    }
                 }
             }
         }
@@ -294,6 +326,13 @@ public class Raycaster : MonoBehaviour {
 
                 foreach (RaycastHit2D spriteHit in spritesHit) {
                     if (spriteHit.collider != null && spriteHit.distance < hit.distance && !spriteColliders.Contains(spriteHit.collider)) {
+                        //Vector2 vectorToSprite = ((Vector2)player.transform.position - (Vector2)spriteHit.transform.position).normalized;
+                        //RaycastHit2D lineOfSight = Physics2D.Linecast(player.transform.position, spriteHit.transform.position, LayerMask.GetMask(new string[] { "SpritesNoCollision", "Sprites", "World" }));
+
+                        //if (lineOfSight.collider != null && lineOfSight.collider.gameObject.layer == LayerMask.NameToLayer("World")) {
+                        //    continue;
+                        //}
+
                         spriteColliders.Add(spriteHit.collider);
                     }
                 }
