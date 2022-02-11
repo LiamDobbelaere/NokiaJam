@@ -294,6 +294,28 @@ public class Raycaster : MonoBehaviour {
 
             foreach (RaycastHit2D spriteHit in spritesHit) {
                 if (spriteHit.collider != null && !spriteColliders.Contains(spriteHit.collider)) {
+
+                    SpriteRaycastAttributes src = spriteHit.collider.gameObject.GetComponent<SpriteRaycastAttributes>();
+                    if (src != null && src.noZTest) {
+                        Vector2 rayFromPlayerToSprite = (spriteHit.transform.position - player.transform.position).normalized;
+                        RaycastHit2D canPlayerSeeSprite = Physics2D.Raycast(
+                            player.transform.position,
+                            rayFromPlayerToSprite,
+                            maxSpriteDistanceFactor,
+                            LayerMask.GetMask(new string[] { "Sprites", "SpritesNoCollision", "World" })
+                        );
+                        Debug.DrawRay(
+                           (Vector2)player.transform.position,
+                           rayFromPlayerToSprite,
+                           Color.magenta,
+                           artificialFramerateValue
+                        );
+
+                        if (canPlayerSeeSprite.collider.gameObject.layer == LayerMask.NameToLayer("World")) {
+                            continue;
+                        }
+                    }
+
                     spriteColliders.Add(spriteHit.collider);
                 }
             }
