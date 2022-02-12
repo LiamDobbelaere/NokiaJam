@@ -56,4 +56,13 @@ public static class Extensions {
 
         return result;
     }
+
+    public static Texture2D ToTexture2D(this RenderTexture renderTexture, Texture2D destination) {
+        // ReadPixels looks at the active RenderTexture.
+        RenderTexture.active = renderTexture;
+        destination.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+        destination.Apply();
+        return destination;
+    }
+
 }

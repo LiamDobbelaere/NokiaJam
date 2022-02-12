@@ -59,6 +59,7 @@ public class Raycaster : MonoBehaviour {
 
     private Option[] options;
     private int currentOptionIndex = 0;
+    private Texture2D mapTexture;
 
     // Start is called before the first frame update
     void Start() {
@@ -172,6 +173,8 @@ public class Raycaster : MonoBehaviour {
 
         fovIncrement = fov / surfaceWidth;
         artificialFramerate = artificialFramerateValue;
+
+        mapTexture = new Texture2D(Camera.main.targetTexture.width, Camera.main.targetTexture.height);
     }
 
     private void SetupSurface() {
@@ -207,6 +210,9 @@ public class Raycaster : MonoBehaviour {
                 break;
             case ViewMode.OPTIONS:
                 RenderOptions();
+                break;
+            case ViewMode.MAP:
+                RenderMap();
                 break;
         }
 
@@ -508,6 +514,13 @@ public class Raycaster : MonoBehaviour {
                 player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
             }
         }
+
+        if (Input.GetButtonDown("Map")) {
+            currentViewMode = currentViewMode == ViewMode.MAP ? ViewMode.WORLD : ViewMode.MAP;
+            if (currentViewMode == ViewMode.MAP) {
+                player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+            }
+        }
     }
 
     private void DrawOverlay(Texture2D overlay) {
@@ -521,5 +534,9 @@ public class Raycaster : MonoBehaviour {
                 surface.SetPixel(cx, surface.height - 1 - cy, col.r < 0.5f ? nokiaFront : nokiaBack);
             }
         }
+    }
+
+    private void RenderMap() {
+        DrawOverlay(Camera.main.targetTexture.ToTexture2D(mapTexture));
     }
 }
