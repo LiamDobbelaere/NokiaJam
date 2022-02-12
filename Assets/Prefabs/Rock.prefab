@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 4797807955990775981}
   m_Layer: 6
   m_Name: Rock
-  m_TagString: Untagged
+  m_TagString: PlayerBullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -101,6 +101,7 @@ MonoBehaviour:
   zOffset: 0
   scale: 2
   noZTest: 0
+  quadAngleSprites: []
 --- !u!58 &3269899484154866623
 CircleCollider2D:
   m_ObjectHideFlags: 0

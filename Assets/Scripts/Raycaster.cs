@@ -19,6 +19,8 @@ public class Raycaster : MonoBehaviour {
     public Texture2D font;
     public Texture2D slingshotIdle;
     public Texture2D slingshotFire;
+    public AudioClip optionsOpen;
+    public AudioClip optionChange;
 
     private Dictionary<char, Color[]> fontMap;
 
@@ -49,7 +51,7 @@ public class Raycaster : MonoBehaviour {
 
     private float artificialFramerateValue = 1 / 15f;
     private float artificialFramerate;
-    private int framerateMode = 0;
+    private int framerateMode = Application.isEditor ? 2 : 0;
     private bool useArtificialFramerate = !Application.isEditor;
 
     private ViewMode currentViewMode = ViewMode.WORLD;
@@ -60,7 +62,7 @@ public class Raycaster : MonoBehaviour {
     // Start is called before the first frame update
     void Start() {
         options = new Option[] {
-            new Option {
+            /*new Option {
                 label = "colors",
                 sublabel = () => forceGrayscale ? "grayscl. test" : "nokia colors",
                 execute = () => {
@@ -75,6 +77,13 @@ public class Raycaster : MonoBehaviour {
                         clearColor = nokiaBack;
                     }
                 }
+            },*/
+            new Option {
+                label = "keypress",
+                sublabel = () => GlobalGameSettings.oneKeyControlMode ? "one" : "several",
+                execute = () => {
+                    GlobalGameSettings.oneKeyControlMode = !GlobalGameSettings.oneKeyControlMode;
+                }
             },
             new Option {
                 label = "fov",
@@ -87,7 +96,7 @@ public class Raycaster : MonoBehaviour {
                     fovIncrement = fov / surfaceWidth;
                 }
             },
-            new Option {
+            /*new Option {
                 label = "hires test",
                 sublabel = () => surfaceWidth == 84 ? "no" : "yes",
                 execute = () => {
@@ -101,9 +110,9 @@ public class Raycaster : MonoBehaviour {
 
                     Start();
                 }
-            },
+            },*/
             new Option {
-                label = "frames/s",
+                label = "framerate",
                 sublabel = () => useArtificialFramerate ? Mathf.RoundToInt(1 / artificialFramerateValue).ToString() : "uncapped",
                 execute = () => {
                     framerateMode++;
@@ -450,20 +459,37 @@ public class Raycaster : MonoBehaviour {
     }
 
     private void ProcessInput() {
+        GlobalGameSettings.isOptionsOpen = currentViewMode == ViewMode.OPTIONS;
         if (currentViewMode == ViewMode.OPTIONS) {
             if (Input.GetButtonDown("PrimaryAction")) {
+                player.GetComponent<PlayerController>().PlayAudio(optionChange);
+
                 options[currentOptionIndex].execute();
             }
             if (Input.GetButtonDown("Horizontal")) {
-                currentOptionIndex++;
+                player.GetComponent<PlayerController>().PlayAudio(optionChange);
+
+                if (Input.GetAxisRaw("Horizontal") > 0f) {
+                    currentOptionIndex++;
+                } else {
+                    currentOptionIndex--;
+                }
+
                 if (currentOptionIndex >= options.Length) {
                     currentOptionIndex = 0;
+                }
+
+                if (currentOptionIndex < 0) {
+                    currentOptionIndex = options.Length - 1;
                 }
             }
         }
 
         if (Input.GetButtonDown("Options")) {
             currentViewMode = currentViewMode == ViewMode.OPTIONS ? ViewMode.WORLD : ViewMode.OPTIONS;
+            if (currentViewMode == ViewMode.OPTIONS) {
+                player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+            }
         }
     }
 

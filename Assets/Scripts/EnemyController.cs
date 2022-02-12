@@ -7,7 +7,9 @@ public class EnemyController : MonoBehaviour {
     }
 
     public Sprites[] sprites;
+    public Sprite[] ripSprites;
     public AudioClip yell;
+    public AudioClip die;
 
     private float framerate = 0.25f;
     private float framerateTimer;
@@ -23,6 +25,9 @@ public class EnemyController : MonoBehaviour {
     private const float lineOfSight = 10f;
 
     private float lastYellTimer = 0f;
+    private float lastWanderTimer = 0f;
+
+    private bool isDead = false;
 
     // Start is called before the first frame update
     void Start() {
@@ -33,8 +38,16 @@ public class EnemyController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+        if (isDead || GlobalGameSettings.isOptionsOpen) {
+            return;
+        }
+
         if (lastYellTimer > 0f) {
             lastYellTimer -= Time.deltaTime;
+        }
+
+        if (lastWanderTimer > 0f) {
+            lastWanderTimer -= Time.deltaTime;
         }
 
         framerateTimer += Time.deltaTime;
@@ -57,11 +70,42 @@ public class EnemyController : MonoBehaviour {
 
                 lastYellTimer = Random.Range(3f, 5f);
             }
+        } else {
+            if (lastWanderTimer <= 0f) {
+                Vector2 randomDir = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+
+                RaycastHit2D worldHit = Physics2D.Raycast(transform.position,
+                    randomDir, lineOfSight * 10f, LayerMask.GetMask(new string[] { "World" }));
+
+                if (worldHit.collider != null) {
+                    targetLocation = worldHit.point;
+                    transform.up = (targetLocation - (Vector2)transform.position).normalized;
+                }
+
+                lastWanderTimer = Random.Range(3f, 5f);
+            }
         }
     }
 
     private void FixedUpdate() {
-        // TODO: add wander AI
+        if (isDead || GlobalGameSettings.isOptionsOpen) {
+            return;
+        }
+
         rb.AddForce((targetLocation - (Vector2)transform.position).normalized * moveSpeed);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision) {
+        if (isDead || GlobalGameSettings.isOptionsOpen) {
+            return;
+        }
+
+        if (collision.collider.CompareTag("PlayerBullet")) {
+            player.GetComponent<PlayerController>().PlayAudio(die);
+            spriteRaycastAttributes.quadAngleSprites = ripSprites;
+            spriteRaycastAttributes.zOffset = -10;
+            spriteRaycastAttributes.scale = 0.5f;
+            isDead = true;
+        }
     }
 }

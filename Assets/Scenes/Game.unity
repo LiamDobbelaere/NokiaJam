@@ -278,7 +278,7 @@ GameObject:
   - component: {fileID: 186971222}
   m_Layer: 6
   m_Name: EnemySkeleton
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -399,7 +399,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 186971216}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -22.42, y: -20.56, z: 0}
+  m_LocalPosition: {x: -29.7, y: -22.55, z: 0}
   m_LocalScale: {x: 0.36478442, y: 0.36478442, z: 0.36478442}
   m_Children:
   - {fileID: 1113373158}
@@ -439,7 +439,13 @@ MonoBehaviour:
     - {fileID: 21300000, guid: bcaf1753c556df3489f1789623e11ca4, type: 3}
     - {fileID: 21300000, guid: 5adea0069e3a6ed47864a392e3adfed7, type: 3}
     - {fileID: 21300000, guid: f2e680b6e9cfae248a7636bc4b24dea1, type: 3}
+  ripSprites:
+  - {fileID: 21300000, guid: 82a7d8b14b94113439887241f91751e0, type: 3}
+  - {fileID: 21300000, guid: c6729d8798dc5bb48875c9ae6e4203e3, type: 3}
+  - {fileID: 21300000, guid: 326cb95ef8ebed343a5c232cf750f37f, type: 3}
+  - {fileID: 21300000, guid: 1131b0fa8bf901d42b4412f6237a0185, type: 3}
   yell: {fileID: 8300000, guid: b52624f06295dc64582c490cfc9acc42, type: 3}
+  die: {fileID: 8300000, guid: e98647b446a0ed14eaa574c5c42300a4, type: 3}
 --- !u!1001 &331067366
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4211,6 +4217,8 @@ MonoBehaviour:
   font: {fileID: 2800000, guid: df6cb2efa8491a14482172e725bb42d0, type: 3}
   slingshotIdle: {fileID: 2800000, guid: b73aa3ff7e93f3b42af10d9c6fc2906b, type: 3}
   slingshotFire: {fileID: 2800000, guid: 4f81167ece2de934e94ae830512249ed, type: 3}
+  optionsOpen: {fileID: 8300000, guid: fd340fb1d684fa8429874f2aba981891, type: 3}
+  optionChange: {fileID: 8300000, guid: 07b012beb639bc44fb736bcec5f5ceee, type: 3}
 --- !u!1001 &1665707342
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5254,6 +5262,14 @@ PrefabInstance:
     - target: {fileID: 2550832121550007930, guid: 9a9b4f57f865b37488ed8a217a619f24, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2550832121550007932, guid: 9a9b4f57f865b37488ed8a217a619f24, type: 3}
+      propertyPath: texture
+      value: 
+      objectReference: {fileID: 21300000, guid: b88fc1fad719fc04cbf11558c5e3bfe9, type: 3}
+    - target: {fileID: 2550832121550007932, guid: 9a9b4f57f865b37488ed8a217a619f24, type: 3}
+      propertyPath: renderStyle
+      value: tex
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a9b4f57f865b37488ed8a217a619f24, type: 3}

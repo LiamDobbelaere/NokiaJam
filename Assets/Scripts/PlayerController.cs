@@ -14,7 +14,6 @@ public class PlayerController : MonoBehaviour {
 
     private const float moveSpeed = 24f;
     private const float rotateSpeed = 150f;
-    private const bool oneButtonAtATime = true;
 
     private Vector2 lastFootstepPosition;
     private float musicTime = 0f;
@@ -28,11 +27,15 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void Update() {
+        if (GlobalGameSettings.isOptionsOpen) {
+            return;
+        }
+
         if (fireCooldownTimer > 0f) {
             fireCooldownTimer -= Time.deltaTime;
         }
 
-        if (oneButtonAtATime) {
+        if (GlobalGameSettings.oneKeyControlMode) {
             horizontal = Input.GetAxisRaw("Horizontal");
 
             if (Mathf.Abs(horizontal) < 0.1f) {
@@ -43,20 +46,20 @@ public class PlayerController : MonoBehaviour {
                     bool fire = Input.GetButtonDown("PrimaryAction");
 
                     if (fire && !IsFireCooldownActive()) {
-                        fireCooldownTimer = 1f;
-
-                        GameObject bullet = Instantiate(rock, transform.position + transform.up * 0.5f, transform.rotation);
-                        bullet.GetComponent<Rigidbody2D>().AddForce(transform.up * 500f);
-
-                        PlayAudio(shootSound);
+                        FireBullet();
                     }
                 }
             } else {
                 vertical = 0f;
             }
-
         } else {
+            horizontal = Input.GetAxisRaw("Horizontal");
+            vertical = Input.GetAxisRaw("Vertical");
+            bool fire = Input.GetButtonDown("PrimaryAction");
 
+            if (fire && !IsFireCooldownActive()) {
+                FireBullet();
+            }
         }
 
         transform.Rotate(0f, 0f, -horizontal * rotateSpeed * Time.deltaTime);
@@ -69,9 +72,11 @@ public class PlayerController : MonoBehaviour {
 
     // Update is called once per frame
     void FixedUpdate() {
-        // TODO: add strafing
+        if (GlobalGameSettings.isOptionsOpen) {
+            return;
+        }
+
         rb.AddRelativeForce(new Vector2(0f, vertical) * moveSpeed);
-        //rb.AddTorque(-horizontal * rotateSpeed);
     }
 
     public bool IsFireCooldownActive() {
@@ -82,5 +87,14 @@ public class PlayerController : MonoBehaviour {
         audioSource.Stop();
         audioSource.clip = clip;
         audioSource.Play();
+    }
+
+    private void FireBullet() {
+        fireCooldownTimer = 1f;
+
+        GameObject bullet = Instantiate(rock, transform.position + transform.up * 0.5f, transform.rotation);
+        bullet.GetComponent<Rigidbody2D>().AddForce(transform.up * 500f);
+
+        PlayAudio(shootSound);
     }
 }

@@ -28,7 +28,9 @@ public class DestroyOnCollide : MonoBehaviour {
     }
 
     private void OnCollisionEnter2D(Collision2D collision) {
-        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>().PlayAudio(hitClip);
+        if (!collision.collider.CompareTag("Enemy")) {
+            GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>().PlayAudio(hitClip);
+        }
         Destroy(gameObject);
     }
 }
