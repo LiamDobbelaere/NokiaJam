@@ -7,6 +7,8 @@ public class Button : MonoBehaviour {
     public UnityEvent onPressed;
     public UnityEvent onReleased;
 
+    public AudioClip activeSound;
+
     private SpriteRenderer spriteRenderer;
     private float boxTestTimer = 0f;
 
@@ -24,6 +26,7 @@ public class Button : MonoBehaviour {
             if (col != null) {
                 if (this.spriteRenderer.sprite != pressedSprite && onPressed != null) {
                     onPressed.Invoke();
+                    GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>().PlayAudio(activeSound);
                 }
 
                 this.spriteRenderer.sprite = pressedSprite;

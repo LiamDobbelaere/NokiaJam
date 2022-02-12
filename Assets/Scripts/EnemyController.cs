@@ -21,7 +21,7 @@ public class EnemyController : MonoBehaviour {
     private Vector2 targetLocation;
     private GameObject player;
 
-    private float moveSpeed = 4f;
+    private float moveSpeed = 6f;
     private const float lineOfSight = 10f;
 
     private float lastYellTimer = 0f;
@@ -61,7 +61,7 @@ public class EnemyController : MonoBehaviour {
         RaycastHit2D canSeePlayer =
             Physics2D.Raycast(transform.position, player.transform.position - transform.position, lineOfSight, LayerMask.GetMask(new string[] { "World", "Player" }));
 
-        if (canSeePlayer.collider.gameObject.layer == LayerMask.NameToLayer("Player")) {
+        if (canSeePlayer.collider != null && canSeePlayer.collider.gameObject.layer == LayerMask.NameToLayer("Player")) {
             targetLocation = canSeePlayer.transform.position;
             transform.up = (targetLocation - (Vector2)transform.position).normalized;
 
@@ -105,6 +105,8 @@ public class EnemyController : MonoBehaviour {
             spriteRaycastAttributes.quadAngleSprites = ripSprites;
             spriteRaycastAttributes.zOffset = -10;
             spriteRaycastAttributes.scale = 0.5f;
+            rb.drag = 0f;
+            rb.angularDrag = 0.05f;
             isDead = true;
         }
     }
