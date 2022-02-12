@@ -98,6 +98,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zOffset: 0.5
   scale: 0.75
+  noZTest: 1
+  quadAngleSprites: []
 --- !u!61 &7993870802650699302
 BoxCollider2D:
   m_ObjectHideFlags: 0

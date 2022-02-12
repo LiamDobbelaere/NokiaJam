@@ -330,7 +330,7 @@ public class Raycaster : MonoBehaviour {
                     SpriteRaycastAttributes src = spriteHit.collider.gameObject.GetComponent<SpriteRaycastAttributes>();
                     if (src != null && src.noZTest) {
                         Vector2 rayFromPlayerToSprite = (spriteHit.transform.position - player.transform.position).normalized;
-                        RaycastHit2D canPlayerSeeSprite = Physics2D.Raycast(
+                        RaycastHit2D[] canPlayerSeeSprite = Physics2D.RaycastAll(
                             player.transform.position,
                             rayFromPlayerToSprite,
                             maxSpriteDistanceFactor,
@@ -343,7 +343,18 @@ public class Raycaster : MonoBehaviour {
                            artificialFramerateValue
                         );
 
-                        if (canPlayerSeeSprite.collider.gameObject.layer == LayerMask.NameToLayer("World")) {
+                        bool shouldSkip = false;
+                        foreach (RaycastHit2D currentHit in canPlayerSeeSprite) {
+                            if (currentHit.collider == spriteHit.collider) {
+                                break;
+                            }
+
+                            if (currentHit.collider.gameObject.layer == LayerMask.NameToLayer("World")) {
+                                shouldSkip = true;
+                            }
+                        }
+
+                        if (shouldSkip) {
                             continue;
                         }
                     }
@@ -355,7 +366,12 @@ public class Raycaster : MonoBehaviour {
             x++;
         }
 
-        spriteColliders.Reverse();
+        spriteColliders.Sort((a, b) => {
+            float aDistance = Vector2.Distance(player.transform.position, a.transform.position);
+            float bDistance = Vector2.Distance(player.transform.position, b.transform.position);
+
+            return bDistance.CompareTo(aDistance);
+        });
         foreach (Collider2D spriteCollider in spriteColliders) {
             Vector2 vectorToSprite = spriteCollider.transform.position - player.transform.position;
             float angleToSprite = Vector2.SignedAngle(vectorToSprite, player.transform.up);
