@@ -53,6 +53,7 @@ public class Raycaster : MonoBehaviour {
     private float artificialFramerate;
     private int framerateMode = Application.isEditor ? 2 : 0;
     private bool useArtificialFramerate = !Application.isEditor;
+    private bool invertedColors = false;
 
     private ViewMode currentViewMode = ViewMode.WORLD;
 
@@ -136,7 +137,23 @@ public class Raycaster : MonoBehaviour {
                             break;
                     }
                 }
-            }
+            },
+            new Option {
+                label = "colors",
+                sublabel = () => invertedColors ? "invert" : "normal",
+                execute = () => {
+                    invertedColors = !invertedColors;
+                    if (invertedColors) {
+                        nokiaBack = nokiaFrontColor;
+                        nokiaFront = nokiaBackColor;
+                        clearColor = nokiaBack;
+                    } else {
+                        nokiaBack = nokiaBackColor;
+                        nokiaFront = nokiaFrontColor;
+                        clearColor = nokiaBack;
+                    }
+                }
+            },
         };
         BuildFontMap();
 
