@@ -333,6 +333,14 @@ public class Raycaster : MonoBehaviour {
 
             SpriteRenderer spriteRenderer = spriteCollider.gameObject.GetComponent<SpriteRenderer>();
             SpriteRaycastAttributes spriteAttributes = spriteCollider.gameObject.GetComponent<SpriteRaycastAttributes>();
+            Texture2D spriteTextureOriginal = spriteRenderer.sprite.texture;
+
+            if (spriteAttributes.quadAngleSprites.Length == 4) {
+                float rawIndex = Mathf.Round(Vector2.SignedAngle(player.transform.right, spriteCollider.transform.right) / 90f);
+                int actualIndex = ((int)rawIndex + 2) % 4;
+
+                spriteTextureOriginal = spriteAttributes.quadAngleSprites[actualIndex].texture;
+            }
 
             float baseDistance = Vector2.Distance(spriteCollider.transform.position, player.transform.position);
             float distance = baseDistance;
@@ -342,15 +350,15 @@ public class Raycaster : MonoBehaviour {
 
             float closenessFactor = 1f / distance; //2f - Mathf.Max(Mathf.Min((distance / 3f), 3f), 0f);
 
-            int targetWidth = Mathf.RoundToInt(spriteRenderer.sprite.texture.width * closenessFactor);
-            int targetHeight = Mathf.RoundToInt(spriteRenderer.sprite.texture.height * closenessFactor);
+            int targetWidth = Mathf.RoundToInt(spriteTextureOriginal.width * closenessFactor);
+            int targetHeight = Mathf.RoundToInt(spriteTextureOriginal.height * closenessFactor);
             if (targetWidth < 1 || targetHeight < 1) {
                 continue;
             }
 
             float fovAlignmentFactor = angleToSprite / (fov * 0.5f);
 
-            Texture2D spriteTexture = spriteRenderer.sprite.texture.ResizeNN(
+            Texture2D spriteTexture = spriteTextureOriginal.ResizeNN(
                 Mathf.Min(100, Mathf.RoundToInt(targetWidth * spriteAttributes.scale)),
                 Mathf.Min(100, Mathf.RoundToInt(targetHeight * spriteAttributes.scale))
             );
