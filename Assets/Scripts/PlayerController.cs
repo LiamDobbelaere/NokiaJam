@@ -141,6 +141,10 @@ public class PlayerController : MonoBehaviour {
         return health > 0;
     }
 
+    public int GetHealth() {
+        return health;
+    }
+
     private void FireBullet() {
         fireCooldownTimer = 1f;
 

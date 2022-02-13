@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public enum ViewMode {
     WORLD,
     MAP,
     OPTIONS,
-    TITLE
+    TITLE,
+    GAMEOVER
 };
 
 public class Option {
@@ -20,6 +22,7 @@ public class Raycaster : MonoBehaviour {
     public Texture2D font;
     public Texture2D slingshotIdle;
     public Texture2D slingshotFire;
+    public Texture2D heartSprite;
     public AudioClip optionsOpen;
     public AudioClip optionChange;
 
@@ -62,6 +65,7 @@ public class Raycaster : MonoBehaviour {
     private Option[] options;
     private int currentOptionIndex = 0;
     private Texture2D mapTexture;
+    private int forceRestartPresses;
 
     // Start is called before the first frame update
     void Start() {
@@ -84,15 +88,9 @@ public class Raycaster : MonoBehaviour {
             },*/
             new Option {
                 label = "music",
-                sublabel = () => {
-                    PlayerController cont = player.GetComponent<PlayerController>();
-
-                    return cont.IsMusicEnabled() ? "on" : "off";
-                },
+                sublabel = () => playerController.IsMusicEnabled() ? "on" : "off",
                 execute = () => {
-                    PlayerController cont = player.GetComponent<PlayerController>();
-
-                    cont.ToggleMusicEnabled();
+                    playerController.ToggleMusicEnabled();
                 }
             },
             new Option {
@@ -170,6 +168,24 @@ public class Raycaster : MonoBehaviour {
                     }
                 }
             },
+            new Option {
+                label = "restart",
+                sublabel = () => {
+                    string output = forceRestartPresses > 0 ? "sure" : "";
+                    for (int i = 0; i < forceRestartPresses; i++) {
+                        output += "?";
+                    }
+
+                    return output;
+                },
+                execute = () => {
+                    forceRestartPresses++;
+
+                    if (forceRestartPresses > 2) {
+                        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                    }
+                }
+            },
         };
         BuildFontMap();
 
@@ -223,8 +239,12 @@ public class Raycaster : MonoBehaviour {
             case ViewMode.TITLE:
                 RenderTitle();
                 break;
+            case ViewMode.GAMEOVER:
+                RenderGameOver();
+                break;
             case ViewMode.WORLD:
                 RenderWorld();
+                RenderHealth();
                 break;
             case ViewMode.OPTIONS:
                 RenderOptions();
@@ -516,23 +536,31 @@ public class Raycaster : MonoBehaviour {
     }
 
     private void ProcessInput() {
-        GlobalGameSettings.isPaused = currentViewMode != ViewMode.WORLD && currentViewMode != ViewMode.MAP;
+        if (!playerController.IsAlive()) {
+            currentViewMode = ViewMode.GAMEOVER;
+        }
+
+        GlobalGameSettings.isPaused =
+            currentViewMode != ViewMode.WORLD
+            && currentViewMode != ViewMode.MAP
+            && currentViewMode != ViewMode.GAMEOVER;
 
         if (currentViewMode == ViewMode.WORLD || currentViewMode == ViewMode.MAP || currentViewMode == ViewMode.TITLE) {
             if (Input.GetButtonDown("Options")) {
+                forceRestartPresses = 0;
                 lastViewMode = currentViewMode;
                 currentViewMode = ViewMode.OPTIONS;
-                player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+                playerController.PlayAudio(optionsOpen);
             }
         } else if (currentViewMode == ViewMode.OPTIONS) {
             if (Input.GetButtonDown("PrimaryAction")) {
-                player.GetComponent<PlayerController>().PlayAudio(optionChange);
+                playerController.PlayAudio(optionChange);
 
                 options[currentOptionIndex].execute();
             }
 
             if (Input.GetButtonDown("Horizontal")) {
-                player.GetComponent<PlayerController>().PlayAudio(optionChange);
+                playerController.PlayAudio(optionChange);
 
                 if (Input.GetAxisRaw("Horizontal") > 0f) {
                     currentOptionIndex++;
@@ -557,7 +585,13 @@ public class Raycaster : MonoBehaviour {
         if (currentViewMode == ViewMode.TITLE) {
             if (Input.GetButtonDown("PrimaryAction")) {
                 currentViewMode = ViewMode.WORLD;
-                player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+                playerController.PlayAudio(optionsOpen);
+            }
+        }
+
+        if (currentViewMode == ViewMode.GAMEOVER) {
+            if (Input.GetButtonDown("PrimaryAction")) {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
         }
 
@@ -565,7 +599,7 @@ public class Raycaster : MonoBehaviour {
             if (Input.GetButtonDown("Map")) {
                 currentViewMode = currentViewMode == ViewMode.MAP ? ViewMode.WORLD : ViewMode.MAP;
                 if (currentViewMode == ViewMode.MAP) {
-                    player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+                    playerController.PlayAudio(optionsOpen);
                 }
             }
         }
@@ -584,8 +618,27 @@ public class Raycaster : MonoBehaviour {
         }
     }
 
+    private void DrawSpriteScreenSpace(Texture2D sprite, int xOffset, int yOffset) {
+        for (int cy = 0; cy < sprite.height; cy++) {
+            for (int cx = 0; cx < sprite.width; cx++) {
+                Color col = sprite.GetPixel(cx, cy);
+                if (col.a < 0.5f) {
+                    continue;
+                }
+
+                surface.SetPixel(cx + xOffset, (sprite.height - 1) - cy + yOffset, col.r < 0.5f ? nokiaFront : nokiaBack);
+            }
+        }
+    }
+
     private void RenderMap() {
         DrawOverlay(Camera.main.targetTexture.ToTexture2D(mapTexture));
+    }
+
+    private void RenderHealth() {
+        for (int i = 0; i < playerController.GetHealth(); i++) {
+            DrawSpriteScreenSpace(heartSprite, 2 + (heartSprite.width + 2) * i, 2);
+        }
     }
 
     private void RenderTitle() {
@@ -597,5 +650,14 @@ public class Raycaster : MonoBehaviour {
         }
 
         DrawText("(c) Liam 2022", 2, 2 + fontCharacterHeight * 6);
+    }
+
+    private void RenderGameOver() {
+        DrawText("you lost", 2, 2);
+        DrawText("try again?", 2, 2 + fontCharacterHeight);
+
+        if (Mathf.RoundToInt(Time.time) % 2 == 0) {
+            DrawText("x to restart", 2, 2 + fontCharacterHeight * 3);
+        }
     }
 }
