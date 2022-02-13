@@ -9,7 +9,8 @@ public enum ViewMode {
     MAP,
     OPTIONS,
     TITLE,
-    GAMEOVER
+    GAMEOVER,
+    WIN
 };
 
 public class Option {
@@ -241,6 +242,9 @@ public class Raycaster : MonoBehaviour {
                 break;
             case ViewMode.GAMEOVER:
                 RenderGameOver();
+                break;
+            case ViewMode.WIN:
+                RenderWin();
                 break;
             case ViewMode.WORLD:
                 RenderWorld();
@@ -540,10 +544,14 @@ public class Raycaster : MonoBehaviour {
             currentViewMode = ViewMode.GAMEOVER;
         }
 
+        if (GlobalGameSettings.beatGame) {
+            currentViewMode = ViewMode.WIN;
+        }
+
         GlobalGameSettings.isPaused =
-            currentViewMode != ViewMode.WORLD
-            && currentViewMode != ViewMode.MAP
-            && currentViewMode != ViewMode.GAMEOVER;
+            (currentViewMode != ViewMode.WORLD
+            && currentViewMode != ViewMode.MAP)
+            || GlobalGameSettings.beatGame;
 
         if (currentViewMode == ViewMode.WORLD || currentViewMode == ViewMode.MAP || currentViewMode == ViewMode.TITLE) {
             if (Input.GetButtonDown("Options")) {
@@ -591,6 +599,13 @@ public class Raycaster : MonoBehaviour {
 
         if (currentViewMode == ViewMode.GAMEOVER) {
             if (Input.GetButtonDown("PrimaryAction")) {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
+        }
+
+        if (currentViewMode == ViewMode.WIN) {
+            if (Input.GetButtonDown("PrimaryAction")) {
+                GlobalGameSettings.beatGame = false;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
         }
@@ -649,6 +664,8 @@ public class Raycaster : MonoBehaviour {
             DrawText("x to start", 2, 2 + fontCharacterHeight * 3);
         }
 
+        DrawText("o for options", 2, 2 + fontCharacterHeight * 4);
+
         DrawText("(c) Liam 2022", 2, 2 + fontCharacterHeight * 6);
     }
 
@@ -658,6 +675,18 @@ public class Raycaster : MonoBehaviour {
 
         if (Mathf.RoundToInt(Time.time) % 2 == 0) {
             DrawText("x to restart", 2, 2 + fontCharacterHeight * 3);
+        }
+    }
+
+    private void RenderWin() {
+        DrawText("you won!", 2, 2);
+        DrawText("well, you won", 2, 2 + fontCharacterHeight);
+        DrawText("the demo, lol", 2, 2 + fontCharacterHeight * 2);
+        DrawText("thanks for", 2, 2 + fontCharacterHeight * 4);
+        DrawText("playing!", 2, 2 + fontCharacterHeight * 5);
+
+        if (Mathf.RoundToInt(Time.time) % 2 == 0) {
+            DrawText("x to restart", 2, 2 + fontCharacterHeight * 6);
         }
     }
 }

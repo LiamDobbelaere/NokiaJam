@@ -9,6 +9,7 @@ TagManager:
   - PlayerBullet
   - Enemy
   - MapItem
+  - EndGame
   layers:
   - Default
   - TransparentFX
