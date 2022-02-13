@@ -38,7 +38,7 @@ public class EnemyController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        if (isDead || GlobalGameSettings.isOptionsOpen) {
+        if (isDead || GlobalGameSettings.isPaused) {
             return;
         }
 
@@ -88,7 +88,7 @@ public class EnemyController : MonoBehaviour {
     }
 
     private void FixedUpdate() {
-        if (isDead || GlobalGameSettings.isOptionsOpen) {
+        if (isDead || GlobalGameSettings.isPaused) {
             return;
         }
 
@@ -96,7 +96,7 @@ public class EnemyController : MonoBehaviour {
     }
 
     private void OnCollisionEnter2D(Collision2D collision) {
-        if (isDead || GlobalGameSettings.isOptionsOpen) {
+        if (isDead || GlobalGameSettings.isPaused) {
             return;
         }
 

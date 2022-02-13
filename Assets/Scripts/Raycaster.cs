@@ -6,7 +6,8 @@ using UnityEngine.UI;
 public enum ViewMode {
     WORLD,
     MAP,
-    OPTIONS
+    OPTIONS,
+    TITLE
 };
 
 public class Option {
@@ -55,7 +56,8 @@ public class Raycaster : MonoBehaviour {
     private bool useArtificialFramerate = !Application.isEditor;
     private bool invertedColors = false;
 
-    private ViewMode currentViewMode = ViewMode.WORLD;
+    private ViewMode currentViewMode = ViewMode.TITLE;
+    private ViewMode lastViewMode = ViewMode.TITLE;
 
     private Option[] options;
     private int currentOptionIndex = 0;
@@ -218,6 +220,9 @@ public class Raycaster : MonoBehaviour {
         surface.Clear(clearColor);
 
         switch (currentViewMode) {
+            case ViewMode.TITLE:
+                RenderTitle();
+                break;
             case ViewMode.WORLD:
                 RenderWorld();
                 break;
@@ -511,13 +516,21 @@ public class Raycaster : MonoBehaviour {
     }
 
     private void ProcessInput() {
-        GlobalGameSettings.isOptionsOpen = currentViewMode == ViewMode.OPTIONS;
-        if (currentViewMode == ViewMode.OPTIONS) {
+        GlobalGameSettings.isPaused = currentViewMode != ViewMode.WORLD && currentViewMode != ViewMode.MAP;
+
+        if (currentViewMode == ViewMode.WORLD || currentViewMode == ViewMode.MAP || currentViewMode == ViewMode.TITLE) {
+            if (Input.GetButtonDown("Options")) {
+                lastViewMode = currentViewMode;
+                currentViewMode = ViewMode.OPTIONS;
+                player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+            }
+        } else if (currentViewMode == ViewMode.OPTIONS) {
             if (Input.GetButtonDown("PrimaryAction")) {
                 player.GetComponent<PlayerController>().PlayAudio(optionChange);
 
                 options[currentOptionIndex].execute();
             }
+
             if (Input.GetButtonDown("Horizontal")) {
                 player.GetComponent<PlayerController>().PlayAudio(optionChange);
 
@@ -535,19 +548,25 @@ public class Raycaster : MonoBehaviour {
                     currentOptionIndex = options.Length - 1;
                 }
             }
+
+            if (Input.GetButtonDown("Options")) {
+                currentViewMode = lastViewMode;
+            }
         }
 
-        if (Input.GetButtonDown("Options")) {
-            currentViewMode = currentViewMode == ViewMode.OPTIONS ? ViewMode.WORLD : ViewMode.OPTIONS;
-            if (currentViewMode == ViewMode.OPTIONS) {
+        if (currentViewMode == ViewMode.TITLE) {
+            if (Input.GetButtonDown("PrimaryAction")) {
+                currentViewMode = ViewMode.WORLD;
                 player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
             }
         }
 
-        if (Input.GetButtonDown("Map")) {
-            currentViewMode = currentViewMode == ViewMode.MAP ? ViewMode.WORLD : ViewMode.MAP;
-            if (currentViewMode == ViewMode.MAP) {
-                player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+        if (currentViewMode == ViewMode.MAP || currentViewMode == ViewMode.WORLD) {
+            if (Input.GetButtonDown("Map")) {
+                currentViewMode = currentViewMode == ViewMode.MAP ? ViewMode.WORLD : ViewMode.MAP;
+                if (currentViewMode == ViewMode.MAP) {
+                    player.GetComponent<PlayerController>().PlayAudio(optionsOpen);
+                }
             }
         }
     }
@@ -567,5 +586,16 @@ public class Raycaster : MonoBehaviour {
 
     private void RenderMap() {
         DrawOverlay(Camera.main.targetTexture.ToTexture2D(mapTexture));
+    }
+
+    private void RenderTitle() {
+        DrawText("tomb of bones:", 2, 2);
+        DrawText("grave danger", 2, 2 + fontCharacterHeight);
+
+        if (Mathf.RoundToInt(Time.time) % 2 == 0) {
+            DrawText("x to start", 2, 2 + fontCharacterHeight * 3);
+        }
+
+        DrawText("(c) Liam 2022", 2, 2 + fontCharacterHeight * 6);
     }
 }

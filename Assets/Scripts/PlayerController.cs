@@ -38,7 +38,7 @@ public class PlayerController : MonoBehaviour {
             }
         }
 
-        if (GlobalGameSettings.isOptionsOpen) {
+        if (GlobalGameSettings.isPaused) {
             return;
         }
 
@@ -87,7 +87,7 @@ public class PlayerController : MonoBehaviour {
 
     // Update is called once per frame
     void FixedUpdate() {
-        if (GlobalGameSettings.isOptionsOpen) {
+        if (GlobalGameSettings.isPaused) {
             return;
         }
 
