@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour {
     public AudioClip footstepSound;
     public AudioClip shootSound;
+    public AudioClip takeDamageSound;
     public GameObject rock;
     public AudioSource audioSource;
     public AudioSource musicAudioSource;
@@ -19,6 +20,8 @@ public class PlayerController : MonoBehaviour {
     private Vector2 lastFootstepPosition;
     private float sfxDoneTime = 0f;
     private bool musicEnabled = true;
+    private int health = 3;
+    private float damageCooldown;
 
     // Start is called before the first frame update
     void Start() {
@@ -38,7 +41,11 @@ public class PlayerController : MonoBehaviour {
             }
         }
 
-        if (GlobalGameSettings.isPaused) {
+        if (damageCooldown > 0f) {
+            damageCooldown -= Time.deltaTime;
+        }
+
+        if (GlobalGameSettings.isPaused || !IsAlive()) {
             return;
         }
 
@@ -87,7 +94,7 @@ public class PlayerController : MonoBehaviour {
 
     // Update is called once per frame
     void FixedUpdate() {
-        if (GlobalGameSettings.isPaused) {
+        if (GlobalGameSettings.isPaused || !IsAlive()) {
             return;
         }
 
@@ -120,6 +127,18 @@ public class PlayerController : MonoBehaviour {
 
     public bool IsMusicEnabled() {
         return musicEnabled;
+    }
+
+    public void TakeDamage() {
+        if (damageCooldown <= 0f) {
+            health -= 1;
+            damageCooldown = 2f;
+            PlayAudio(takeDamageSound);
+        }
+    }
+
+    public bool IsAlive() {
+        return health > 0;
     }
 
     private void FireBullet() {

@@ -95,6 +95,16 @@ public class EnemyController : MonoBehaviour {
         rb.AddForce((targetLocation - (Vector2)transform.position).normalized * moveSpeed);
     }
 
+    private void OnCollisionStay2D(Collision2D collision) {
+        if (isDead || GlobalGameSettings.isPaused) {
+            return;
+        }
+
+        if (collision.collider.CompareTag("Player")) {
+            collision.collider.GetComponent<PlayerController>().TakeDamage();
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision) {
         if (isDead || GlobalGameSettings.isPaused) {
             return;
