@@ -81,6 +81,19 @@ public class Raycaster : MonoBehaviour {
                 }
             },*/
             new Option {
+                label = "music",
+                sublabel = () => {
+                    PlayerController cont = player.GetComponent<PlayerController>();
+
+                    return cont.IsMusicEnabled() ? "on" : "off";
+                },
+                execute = () => {
+                    PlayerController cont = player.GetComponent<PlayerController>();
+
+                    cont.ToggleMusicEnabled();
+                }
+            },
+            new Option {
                 label = "keypress",
                 sublabel = () => GlobalGameSettings.oneKeyControlMode ? "one" : "several",
                 execute = () => {

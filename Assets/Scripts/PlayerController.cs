@@ -4,10 +4,11 @@ public class PlayerController : MonoBehaviour {
     public AudioClip footstepSound;
     public AudioClip shootSound;
     public GameObject rock;
+    public AudioSource audioSource;
+    public AudioSource musicAudioSource;
 
     private float fireCooldownTimer;
     private Rigidbody2D rb;
-    private AudioSource audioSource;
 
     private float horizontal;
     private float vertical;
@@ -16,7 +17,8 @@ public class PlayerController : MonoBehaviour {
     private const float rotateSpeed = 150f;
 
     private Vector2 lastFootstepPosition;
-    private float musicTime = 0f;
+    private float sfxDoneTime = 0f;
+    private bool musicEnabled = true;
 
     // Start is called before the first frame update
     void Start() {
@@ -27,6 +29,15 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void Update() {
+        if (!audioSource.isPlaying) {
+            if (sfxDoneTime < .1f) {
+                sfxDoneTime += Time.deltaTime;
+                if (sfxDoneTime >= .1f && musicEnabled) {
+                    musicAudioSource.volume = 1f;
+                }
+            }
+        }
+
         if (GlobalGameSettings.isOptionsOpen) {
             return;
         }
@@ -65,9 +76,13 @@ public class PlayerController : MonoBehaviour {
         transform.Rotate(0f, 0f, -horizontal * rotateSpeed * Time.deltaTime);
 
         if (Vector2.Distance(lastFootstepPosition, transform.position) > 1f) {
-            PlayAudio(footstepSound);
+            if (!musicEnabled) {
+                PlayAudio(footstepSound);
+            }
             lastFootstepPosition = transform.position;
         }
+
+
     }
 
     // Update is called once per frame
@@ -84,9 +99,27 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void PlayAudio(AudioClip clip) {
+        musicAudioSource.volume = 0f;
         audioSource.Stop();
         audioSource.clip = clip;
+        sfxDoneTime = 0f;
         audioSource.Play();
+    }
+
+    public void ToggleMusicEnabled() {
+        musicEnabled = !musicEnabled;
+
+        if (musicEnabled) {
+            if (sfxDoneTime >= 0.1f) {
+                musicAudioSource.volume = 1f;
+            }
+        } else {
+            musicAudioSource.volume = 0f;
+        }
+    }
+
+    public bool IsMusicEnabled() {
+        return musicEnabled;
     }
 
     private void FireBullet() {
